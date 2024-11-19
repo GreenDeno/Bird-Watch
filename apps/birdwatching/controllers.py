@@ -46,3 +46,8 @@ def index():
 def my_callback():
     # The return value should be a dictionary that will be sent as JSON.
     return dict(my_value=3)
+
+@action("statistics")
+@action.uses('statistics.html', db, auth)
+def statistics():
+    return dict()
