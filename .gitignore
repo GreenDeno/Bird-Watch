@@ -1,5 +1,4 @@
 *.pyc
-__pycache__/*
-databases/*
-!databases/README.md
-apps/.service/
+**/__pycache__/*
+**/databases/*
+**/.service/*
