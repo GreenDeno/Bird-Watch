@@ -35,15 +35,70 @@ from ..models import get_user_email
 url_signer = URLSigner(session)
 
 @action('index')
-@action.uses('index.html', db, auth, url_signer)
+@action.uses('index.html', db, auth, auth.user, url_signer)
 def index():
     return dict(
         # COMPLETE: return here any signed URLs you need.
-        my_callback_url = URL('my_callback', signer=url_signer),
+        get_data_url = URL('get_data', signer=url_signer),
     )
 
-@action('my_callback')
-@action.uses() # Add here things like db, auth, etc.
-def my_callback():
-    # The return value should be a dictionary that will be sent as JSON.
-    return dict(my_value=3)
+@action('get_data', method='GET')
+@action.uses(db, session, auth, url_signer.verify())
+def get_data():
+    
+    user_email = get_user_email()
+    # Query the database for the relevant sightings and their associated locations
+    results = db(
+        (db.checklists.sample_event_identifier == db.sightings.sample_event_identifier) 
+    ).select(
+        db.sightings.specie_name,
+        db.sightings.observation_count,
+        db.checklists.latitude,
+        db.checklists.longitude
+    ).as_list()
+    #print(results[0])
+    # Initialize an empty dictionary to store the results
+    location_dict = {}
+
+    # Process the results and group by (latitude, longitude)
+    for row in results:
+    # Extract latitude, longitude, species name, and count
+        lat, long, specie_name, count = row['checklists']['latitude'], row['checklists']['longitude'], row['sightings']['specie_name'], row['sightings']['observation_count']
+
+        location_key = f"{lat},{long}"
+    
+    # Use (lat, long) as the key in location_dict
+        if location_key not in location_dict:
+            location_dict[location_key] = {
+                'species_counts': {},
+                'total_count': 0
+            }
+
+    # Count occurrences of species at the location
+        if specie_name not in location_dict[location_key]['species_counts']:
+            location_dict[location_key]['species_counts'][specie_name] = count
+        else:
+            location_dict[location_key]['species_counts'][specie_name] += count
+    
+        # Add to the total count for the location
+        location_dict[location_key]['total_count'] += count
+
+# Convert the dictionary to the required format
+    final_results = [
+        {
+            'location_key': location_key,
+            'species_counts': species_counts['species_counts'],  # Ensure no nesting of species_counts
+            'total_count': species_counts['total_count']
+        } 
+        for location_key, species_counts in location_dict.items()
+    ]
+    
+    # Output the final results
+    print(final_results[0])
+    coordinates_and_totals = [
+        [float(location_key.split(',')[0]), float(location_key.split(',')[1]), species_counts['total_count']]
+        for location_key, species_counts in location_dict.items()
+    ]
+    print(coordinates_and_totals[0])
+
+    return dict(results=final_results, user_email = user_email, total=coordinates_and_totals)
