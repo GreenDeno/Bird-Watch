@@ -338,7 +338,7 @@ app.data = {
                 // Add hover interaction for the marker
                 marker.on('mouseover', () => {
                     marker.bindPopup(`
-                        <button onclick="window.location.href='checklist.html?lat=${latLng.lat}&lng=${latLng.lng}'">Add Checklist</button>
+                        <button onclick="window.location.href='/birdwatching/checklist?lat=${latLng.lat}&lng=${latLng.lng}'">Add Checklist</button>
                         <button onclick="app.vue.removeMarker(${this.markers.indexOf(marker)})">Delete Marker</button>
                     `).openPopup();
                 });
