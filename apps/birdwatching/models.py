@@ -15,9 +15,9 @@ def get_time():
 
 
 ### Define your table below
-#
+# me branch testing again and again
 # db.define_table('thing', Field('name'))
-#
+# this is just me checking testing something with git
 ## always commit your models to avoid problems later
 
 db.commit()
