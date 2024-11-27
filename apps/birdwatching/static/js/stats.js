@@ -1,6 +1,10 @@
 "use strict";
 
 function process_sightings_dataset(sightings) {
+    if (!Array.isArray(sightings)) {
+        return [];
+    }
+
     // If there is only one point, pad the data
     if (sightings.length == 1) {
         const sighting = sightings[0];
@@ -45,6 +49,10 @@ function process_sightings_dataset(sightings) {
 }
 
 function process_species_dataset(sightings) {
+    if (!Array.isArray(sightings)) {
+        return [];
+    }
+
     // Group sightings by species name
     const species_map = sightings.reduce((acc, sighting) => {
         if (!acc[sighting.name]) {
@@ -245,6 +253,7 @@ app.data = {
             }
 
             this.displayed_species = displayed_species;
+            this.expanded_specie = null;
         },
 
     },

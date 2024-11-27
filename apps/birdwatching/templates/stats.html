@@ -98,32 +98,9 @@ tr.map td {
           </thead>
           <tbody>
 
-            <!-- Selected specie with map expanded -->
-            <!-- <tr class="selected">
-              <td>Species 1</td>
-              <td>5</td>
-              <td>2021-01-01</td>
-              <td>2021-01-05</td>
-            </tr>
-
-            <tr class="map">
-              <td colspan="4">
-                  <div id="map"></div>
-              </td>
-            </tr> -->
-
-            <!-- Default species entry -->
-            <!-- <tr>
-              <td>Species 2</td>
-              <td>2</td>
-              <td>2021-01-01</td>
-              <td>2021-01-05</td>
-            </tr> -->
- 
-            <!-- No Search Results -->
-            <!-- <td colspan="4">No species found</td> -->
-
+            <!-- Display Species -->
             <template v-for="specie in displayed_species" :key="specie.name">
+               <!-- Create a row for each specie -->
                <tr :class="{'selected': expanded_specie == specie.name}" @click="expand_displayed_specie(specie.name)">
                 <td>{{ specie.name }}</td>
                 <td>{{ specie.total_count }}</td>
@@ -131,12 +108,17 @@ tr.map td {
                 <td>{{ specie.last_date }}</td>
               </tr>
 
+              <!-- Display map if expanded -->
               <tr v-if="expanded_specie == specie.name" class="map">
                 <td colspan="4">
                     <div id="map" class="scaled"></div>
                 </td>
               </tr>
             </template>
+
+            <!-- No Search Results -->
+            <td colspan="4" v-if="displayed_species.length == 0">No species found</td>
+
           </tbody>
         </table>
       </div>
