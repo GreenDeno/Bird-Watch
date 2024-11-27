@@ -1,55 +1,207 @@
 "use strict";
 
+function process_sightings_dataset(sightings) {
+    // If there is only one point, pad the data
+    if (sightings.length == 1) {
+        const sighting = sightings[0];
+
+        const new_date = new Date(sighting.date)
+        new_date.setDate(new_date.getDate() + 1);
+
+        sightings.push({
+            date: new_date.toISOString().split('T')[0],
+            count: 0,
+        });
+    }
+
+    // Count sightings per date
+    const sighting_counts = sightings.reduce((acc, sighting) => {
+        const date = sighting.date.split('T')[0]; // Handle ISO date strings
+        const count = sighting.count;
+        acc[date] = (acc[date] || 0) + count;
+        return acc;
+    }, {});
+
+    // Find min and max dates
+    const dates = Object.keys(sighting_counts);
+    const min_date = new Date(Math.min(...dates.map(date => new Date(date))));
+    const max_date = new Date(Math.max(...dates.map(date => new Date(date))));
+
+    // Generate full date range with counts
+    const filled_sightings = [];
+    let current_date = new Date(min_date);
+
+    while (current_date <= max_date) {
+        const date_string = current_date.toISOString().split('T')[0];
+        filled_sightings.push({
+            date: date_string,
+            count: sighting_counts[date_string] || 0
+        });
+        
+        current_date.setDate(current_date.getDate() + 1);
+    }
+
+    return filled_sightings;
+}
+
+function process_species_dataset(sightings) {
+    // Group sightings by species name
+    const species_map = sightings.reduce((acc, sighting) => {
+        if (!acc[sighting.name]) {
+            acc[sighting.name] = {
+                name: sighting.name,
+                total_count: 0,
+                first_date: sighting.date,
+                last_date: sighting.date,
+                positions: []
+            };
+        }
+        
+        // Update total count
+        acc[sighting.name].total_count += sighting.count;
+        
+        // Update first and last dates
+        if (new Date(sighting.date) < new Date(acc[sighting.name].first_date)) {
+            acc[sighting.name].first_date = sighting.date;
+        }
+
+        if (new Date(sighting.date) > new Date(acc[sighting.name].last_date)) {
+            acc[sighting.name].last_date = sighting.date;
+        }
+        
+        // Add position
+        acc[sighting.name].positions.push(sighting.position);
+        
+        return acc;
+    }, {});
+    
+    return Object.values(species_map);
+}
+
 // This will be the object that will contain the Vue attributes
 // and be used to initialize it.
 let app = {};
 
-
 app.data = {    
     data: function() {
         return {
+            activity_sightings: [],
+            species_sightings: [],
+
+            displayed_species: [],
+            expanded_specie: null,
+
             map: null,
-            
-            sighting_heat_layer: null,
-            sighting_positions: [
-                [51.505, -0.09],
-                [51.51, -0.1],
-                [51.51, -0.09],
-                [51.51, -0.08],
-            ]
         };
     },
+
     methods: {
-        update_sighting_map: function() {
-            if (!this.map) {
-                return;
-            }
+        create_sighting_chart: function() {
+            let canvas = document.getElementById('activity-chart');
+            let data_set = this.activity_sightings;
 
-            if (this.sighting_heat_layer) {
-                this.map.removeLayer(this.sighting_heat_layer);
-            }
-
-            this.sighting_heat_layer = L.heatLayer(this.sighting_positions, {
-                radius: 24,
-                minOpacity: 0.4,
-                gradient: {
-                    0.2: 'blue',  // Low intensity values (e.g., 0 to 2) will be blue
-                    0.5: 'cyan',  // Medium intensity values (e.g., 2 to 5) will be cyan
-                    0.7: 'lime',  // Higher intensity values (e.g., 5 to 7) will be lime
-                    0.8: 'yellow',// Even higher intensity values (e.g., 7 to 9) will be yellow
-                    1.0: 'red'    // Highest intensity values (e.g., 9 and above) will be red
+            new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: data_set.map(sighting => sighting.date),
+                    datasets: [{
+                        data: data_set.map(sighting => sighting.count),
+                        borderWidth: 2,
+                        borderColor: 'blue',
+                        backgroundColor: 'rgba(0, 0, 255, 0.1)',
+                        pointRadius: 3,
+                        pointBackgroundColor: 'blue',
+                        tension: 0.5, // Smooth curve
+                        fill: true
+                    }]
                 },
-                blur: 15,
-            }).addTo(this.map);
-
-            this.map.fitBounds(this.sighting_positions.map(point => [point[0], point[1]]), {
-                padding: [5, 5], // Optional: adds some padding around the points
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Sightings'
+                            },
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            },
+                        },
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Your Birdwatching Sightings',
+                            font: {
+                                size: 15,
+                            } 
+                        },
+                        legend: {
+                            display: false
+                        },
+                    }
+                }
             });
         },
 
-        init: function() {
+        update_species_map: function() {
+            let map = this.map;
+
+            if (!map) {
+                return;
+            }
+
+            map.eachLayer(function (layer) {
+                if (!layer._url) { // Check if the layer is not a tile layer
+                    map.removeLayer(layer);
+                }
+            });
+
+            if (!this.expanded_specie) {
+                return;
+            }
+
+            let sighting_positions = this.species_sightings.find(species => species.name == this.expanded_specie).positions;
+            if (!sighting_positions || sighting_positions.length == 0) {
+                return;
+            }
+
+            map.__container = document.getElementById('map selected');
+
+            // Add markers for each sighting position
+            for (let position of sighting_positions) {
+                L.marker(position).addTo(map);
+            }
+
+            // Fit map to bounds of sightings
+            map.fitBounds(sighting_positions, {
+                padding: [25, 25]
+            });
+
+            // Call resize to force map to update
+            map.invalidateSize();
+        },
+
+        create_species_map: function() {
+            if (this.map) {
+                this.map.remove();
+            }
+
+            // Get map container
+            let map_container = document.getElementById('map');
+            if (!map_container) {
+                return;
+            }
+
             // Initialize the map and store it in `this.map`
-            this.map = L.map('map', {
+            this.map = L.map(map_container, {
                 zoomControl: false,
                 attributionControl: false,
             }).setView([51.505, -0.09], 13);
@@ -59,12 +211,35 @@ app.data = {
                 attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             }).addTo(this.map);
         },
+
+        expand_displayed_specie: function(specie_name) {
+            if (this.expanded_specie == specie_name) {
+                this.expanded_specie = null;
+            } else {
+                this.expanded_specie = specie_name;
+
+                this.$nextTick(() => {
+                    this.create_species_map();
+                    this.update_species_map();
+                });
+            }
+        },
+
+        update_displayed_species: function() {
+            let displayed_species = [];
+
+            for (let species of this.species_sightings) {
+                displayed_species.push(species);
+            }
+
+            this.displayed_species = displayed_species;
+        },
+
     },
 
     mounted: function() {
         this.$nextTick(() => {
-            this.init();
-            this.update_sighting_map();
+            this.create_species_map();
         });
     }
 };
@@ -72,6 +247,23 @@ app.data = {
 app.vue = Vue.createApp(app.data).mount("#app");
 
 app.load_data = function () {
+    axios.get(get_sightings_url).then(function(response) {
+        let sightings = response.data;
+
+        app.vue.activity_sightings = process_sightings_dataset(sightings);
+        app.vue.species_sightings = process_species_dataset(sightings);
+
+        app.vue.create_sighting_chart();
+        app.vue.update_displayed_species();
+
+        // for (let species of app.vue.species_sightings) {
+        //     console.log(species.name, species.total_count, species.first_date, species.last_date, species.positions);
+        // }
+
+        // for (let sighting of app.vue.activity_sightings) {
+        //     console.log(sighting.date, sighting.count);
+        // }
+    })
 }
 
 app.load_data();

@@ -35,10 +35,11 @@ tr:hover:not(.map) {
 
 tr.selected td {
   border-bottom: 0;
+  background-color: rgb(229, 229, 254) !important;
 }
 
 tr.map {
-  background-color: #ffffff !important;
+  background-color: rgb(229, 229, 254) !important;
   border-top: 0 !important;
 }
 
@@ -87,7 +88,7 @@ tr.map td {
           <tbody>
 
             <!-- Selected specie with map expanded -->
-            <tr class="selected">
+            <!-- <tr class="selected">
               <td>Species 1</td>
               <td>5</td>
               <td>2021-01-01</td>
@@ -98,18 +99,34 @@ tr.map td {
               <td colspan="4">
                   <div id="map"></div>
               </td>
-            </tr>
+            </tr> -->
 
             <!-- Default species entry -->
-            <tr>
+            <!-- <tr>
               <td>Species 2</td>
               <td>2</td>
               <td>2021-01-01</td>
               <td>2021-01-05</td>
-            </tr>
-
+            </tr> -->
+ 
             <!-- No Search Results -->
             <!-- <td colspan="4">No species found</td> -->
+
+            <template v-for="specie in species_sightings" :key="specie.name">
+               <tr :class="{'selected': expanded_specie == specie.name}" @click="expand_displayed_specie(specie.name)">
+                <td>{{ specie.name }}</td>
+                <td>{{ specie.total_count }}</td>
+                <td>{{ specie.first_date }}</td>
+                <td>{{ specie.last_date }}</td>
+              </tr>
+
+              <tr v-if="expanded_specie == specie.name" class="map">
+                <td colspan="4">
+                    <div id="map" class="scaled"></div>
+                </td>
+              </tr>
+            </template>
+          </tbody>
         </table>
       </div>
     </div>
@@ -118,7 +135,7 @@ tr.map td {
     <div class="column is-half">
       <div class="box">
         <p class="title is-4">Your Activity</p>
-        <!-- <img src="images/trends.png" /> -->
+        <canvas id="activity-chart"></canvas>
       </div>
     </div> 
   </div>
@@ -128,11 +145,16 @@ tr.map td {
 [[block page_scripts]]
 <!-- Loads the index-specific js for Vue -->
 <script>
+  let get_sightings_url = "[[=XML(get_sightings_url)]]";
+  console.log(get_sightings_url);
 </script>
 
 <!-- Leaflet scripts for map -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="Leaflet.heat-gh-pages/dist/leaflet-heat.js"></script>
+
+<!-- Chart.js for visualization -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <!-- Custom js for stats page -->
 <script src="js/stats.js"></script>
