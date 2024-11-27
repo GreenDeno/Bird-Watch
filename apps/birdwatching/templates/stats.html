@@ -71,7 +71,7 @@ tr.map td {
 
         <!-- Search Bar -->
         <p class="control has-icons-left">
-          <input class="input" type="text" placeholder="Search" />
+          <input class="input" type="text" placeholder="Search" v-model="search_query" @input="update_displayed_species"/>
           <span class="icon is-left">
             <i class="fa fa-search" aria-hidden="true"></i>
           </span>
@@ -112,7 +112,7 @@ tr.map td {
             <!-- No Search Results -->
             <!-- <td colspan="4">No species found</td> -->
 
-            <template v-for="specie in species_sightings" :key="specie.name">
+            <template v-for="specie in displayed_species" :key="specie.name">
                <tr :class="{'selected': expanded_specie == specie.name}" @click="expand_displayed_specie(specie.name)">
                 <td>{{ specie.name }}</td>
                 <td>{{ specie.total_count }}</td>

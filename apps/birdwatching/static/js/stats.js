@@ -89,6 +89,7 @@ app.data = {
             species_sightings: [],
 
             displayed_species: [],
+            search_query: '',
             expanded_specie: null,
 
             map: null,
@@ -218,18 +219,29 @@ app.data = {
             } else {
                 this.expanded_specie = specie_name;
 
-                this.$nextTick(() => {
+                // this.$nextTick(() => {
+                // ALlow time for the map to fade in
+                setTimeout(() => {
                     this.create_species_map();
                     this.update_species_map();
-                });
+                }, 200);
             }
         },
 
         update_displayed_species: function() {
+            // If there was no search query, display all species
+            if (this.search_query == '') {
+                this.displayed_species = this.species_sightings;
+                return;
+            }
+
+            // Filter species by search query
             let displayed_species = [];
 
             for (let species of this.species_sightings) {
-                displayed_species.push(species);
+                if (species.name.toLowerCase().includes(this.search_query.toLowerCase())) {
+                    displayed_species.push(species);
+                }
             }
 
             this.displayed_species = displayed_species;
