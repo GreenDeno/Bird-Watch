@@ -1,10 +1,17 @@
 "use strict";
 
+// document.querySelectorAll('.delete-button').forEach(button => {
+//     button.addEventListener('click', (event) => {
+//         const id = button.getAttribute('data-id');
+//         deleteChecklist(id);
+//     });
+// });
+
 let app = {
     data: {
         data: function () {
             return {
-                checklists: checklists, // This comes from the embedded template script
+                checklists: Pchecklists, // Parse the JSON string passed from backend
             };
         },
         methods: {
@@ -22,6 +29,6 @@ let app = {
     },
 };
 
-console.log("Checklists received from backend:", checklists); // Add this line to debug
+// console.log("Checklists received from backend:", JSON.parse(checklists)); // Add this line to debug
 
 app.vue = Vue.createApp(app.data).mount("#app");

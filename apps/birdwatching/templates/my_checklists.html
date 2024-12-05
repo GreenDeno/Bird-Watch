@@ -1,0 +1,25 @@
+[[extend 'layout.html']]
+
+<div id="app">
+    <h1>My Checklists</h1>
+    <!-- <button @click="goToMyChecklists">My Checklists</button> -->
+    <ul>
+        <li v-for="checklist in checklists" :key="checklist.id">
+        <p>{{ checklist?.observation_date || "Unknown Date" }} - {{ checklist.sample_event_identifier || "Unknown Event" }}</p>
+            <button class="delete-button" @click="deleteChecklist(checklist.id)">Delete</button>
+            <button class="edit-button" @click="editChecklist(checklist.id)">Edit</button>
+        </li>
+    {{ pass }}
+    </ul>
+</div>
+
+[[block page_scripts]]
+<script>
+    const checklists = "[[=checklists]]";
+    let decodedChecklists = checklists.replace(/&quot;/g, '"');
+    const Pchecklists = JSON.parse(decodedChecklists);
+
+    console.log("Parsed Checklists:", Pchecklists);
+</script>
+<script src="js/my_checklists.js"></script>
+[[end]]
