@@ -2,21 +2,58 @@
 
 <style>
 [v-cloak] {
-     display: none;
+    display: none;
 }
 </style>
 
-
 <div class="section" id="app" v-cloak>
-  <!-- Put here your Vue.js template -->
-  <h1 class="title"><i class="fa-solid fa-cube"></i> Title</h1>
-  <p>This is checklist page</p>
+    <h1>Checklist Page</h1>
+    <button @click="goToMyChecklists">My Checklists</button>
+    <!-- Submit Checklist Button at the Top -->
+    <button @click="submitChecklist">Submit Checklist</button>
+
+    <!-- Checklist form -->
+    <div>
+        <input type="text" placeholder="Search species..." v-model="speciesSearch">
+        <ul>
+            <li v-for="s in species.filter(sp => sp.name.toLowerCase().includes(speciesSearch.toLowerCase()))" :key="s.id">
+                {{ s.name }}
+                <!-- Input field for count -->
+                <!-- <input type="number" v-model="speciesInput[s.id]" min="0" /> -->
+                <button @click="addSpeciesToChecklist(s.name, speciesInput[s.id])">Add</button>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Table for Checklist -->
+    <table>
+        <thead>
+            <tr>
+                <th>Species</th>
+                <th>Count</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="(item, index) in checklist" :key="index">
+                <td>{{ item.species }}</td>
+                <td>
+                    <input type="number" v-model="item.count" min="0" />
+                </td>
+                <td>
+                    <button @click="incrementCount(index)">+</button>
+                    <button @click="removeFromChecklist(index)">Remove</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
 </div>
 
 
 [[block page_scripts]]
-<!-- Loads the index-specific js for Vue -->
 <script>
+    const lat = "[[=lat]]";
+    const lng = "[[=lng]]";
 </script>
 <script src="js/checklist.js"></script>
 [[end]]
