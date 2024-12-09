@@ -4,19 +4,151 @@
 [v-cloak] {
      display: none;
 }
+
+table {
+  margin-top: 0.5em;
+}
+
+.panel-block {
+  align-items: start;
+}
+
+a.back-button{
+  margin-left: 1.5em;
+}
+
+th.is-white {
+  font-weight: normal;
+
+  color: gray !important;
+  width: 25% !important;
+}
+
+tr:not(.map) {
+  cursor: pointer;
+}
+
+tr:hover:not(.map) {
+  background-color: #f5f5f5 !important;
+  border-radius: 20px;
+}
+
+tr.selected td {
+  border-bottom: 0;
+  background-color: rgb(229, 229, 254) !important;
+}
+
+tr.map {
+  background-color: rgb(229, 229, 254) !important;
+  border-top: 0 !important;
+}
+
+tr.map td {
+  padding-top: 1px;
+}
+
+#map {
+  height: 120px;
+  width: 100%;
+  border-radius: 5px;
+
+  animation: fadeIn 0.2s;
+}
+
+@keyframes fadeIn {
+  from {
+    height: 0px;
+  }
+  to {
+    height: 120px;
+  }
+}
 </style>
 
 
 <div class="section" id="app" v-cloak>
   <!-- Put here your Vue.js template -->
-  <h1 class="title"><i class="fa-solid fa-cube"></i> Title</h1>
-  <p>This is statistic page</p>
+  
+  <!-- Back button -->
+  <a href="[[=URL('index')]]" class="button back-button">Back</a>
+
+  <!-- Columns -->
+  <div class="panel-block">
+    
+    <!-- List of all user's species, left half column -->
+    <div class="column is-half">
+      <div class="box">
+        <p class="title is-4">Your Sightings</p>
+
+        <!-- Search Bar -->
+        <p class="control has-icons-left">
+          <input class="input" type="text" placeholder="Search" v-model="search_query" @input="update_displayed_species"/>
+          <span class="icon is-left">
+            <i class="fa fa-search" aria-hidden="true"></i>
+          </span>
+        </p>
+
+        <!-- List of species -->
+        <table class="table is-fullwidth is-striped">
+          <thead>
+            <th class="is-white">Name</th>
+            <th class="is-white">Sightings</th>
+            <th class="is-white">First Seen</th>
+            <th class="is-white">Last Seen</th>
+          </thead>
+          <tbody>
+
+            <!-- Display Species -->
+            <template v-for="specie in displayed_species" :key="specie.name">
+               <!-- Create a row for each specie -->
+               <tr :class="{'selected': expanded_specie == specie.name}" @click="expand_displayed_specie(specie.name)">
+                <td>{{ specie.name }}</td>
+                <td>{{ specie.total_count }}</td>
+                <td>{{ specie.first_date }}</td>
+                <td>{{ specie.last_date }}</td>
+              </tr>
+
+              <!-- Display map if expanded -->
+              <tr v-if="expanded_specie == specie.name" class="map">
+                <td colspan="4">
+                    <div id="map" class="scaled"></div>
+                </td>
+              </tr>
+            </template>
+
+            <!-- No Search Results -->
+            <td colspan="4" v-if="displayed_species.length == 0">No species found</td>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Visualization of user bird watching trends -->
+    <div class="column is-half">
+      <div class="box">
+        <p class="title is-4">Your Activity</p>
+        <canvas id="activity-chart"></canvas>
+      </div>
+    </div> 
+  </div>
 </div>
 
 
 [[block page_scripts]]
 <!-- Loads the index-specific js for Vue -->
 <script>
+  let get_sightings_url = "[[=XML(get_sightings_url)]]";
+  console.log(get_sightings_url);
 </script>
+
+<!-- Leaflet scripts for map -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="Leaflet.heat-gh-pages/dist/leaflet-heat.js"></script>
+
+<!-- Chart.js for visualization -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Custom js for stats page -->
 <script src="js/stats.js"></script>
 [[end]]
