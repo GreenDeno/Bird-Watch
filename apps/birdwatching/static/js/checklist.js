@@ -11,6 +11,7 @@ app.data = {
             species: [],
             checklist: [],
             speciesSearch: "",
+            speciesInput: {},
         };
     },
     methods: {
@@ -21,10 +22,12 @@ app.data = {
                 console.error("Failed to load species:", error);
             });
         },
-        addSpeciesToChecklist: function (species) {
+        addSpeciesToChecklist: function (species, count) {
+            const sanitizedCount = parseInt(count) || 0;
             if (!this.checklist.some(row => row.species === species)) {
-                this.checklist.push({ species, count: 0 });
+                this.checklist.push({ species, count: sanitizedCount });
             }
+            this.speciesInput[species] = ""; // Clear input for the species
         },
         incrementCount: function (index) {
             this.checklist[index].count++;

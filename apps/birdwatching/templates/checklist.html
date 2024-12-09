@@ -9,17 +9,23 @@
 <div class="section" id="app" v-cloak>
     <h1>Checklist Page</h1>
     <button @click="goToMyChecklists">My Checklists</button>
+    <!-- Submit Checklist Button at the Top -->
+    <button @click="submitChecklist">Submit Checklist</button>
+
     <!-- Checklist form -->
     <div>
         <input type="text" placeholder="Search species..." v-model="speciesSearch">
         <ul>
             <li v-for="s in species.filter(sp => sp.name.toLowerCase().includes(speciesSearch.toLowerCase()))" :key="s.id">
                 {{ s.name }}
-                <button @click="addSpeciesToChecklist(s.name)">Add</button>
+                <!-- Input field for count -->
+                <!-- <input type="number" v-model="speciesInput[s.id]" min="0" /> -->
+                <button @click="addSpeciesToChecklist(s.name, speciesInput[s.id])">Add</button>
             </li>
         </ul>
     </div>
 
+    <!-- Table for Checklist -->
     <table>
         <thead>
             <tr>
@@ -31,13 +37,9 @@
         <tbody>
             <tr v-for="(item, index) in checklist" :key="index">
                 <td>{{ item.species }}</td>
-                <!-- <td>{{ item.count }}</td> -->
-
                 <td>
-                  <!-- Text box for manually entering the count -->
-                  <input type="number" v-model="item.count" min="0" />
-              </td>
-
+                    <input type="number" v-model="item.count" min="0" />
+                </td>
                 <td>
                     <button @click="incrementCount(index)">+</button>
                     <button @click="removeFromChecklist(index)">Remove</button>
@@ -45,9 +47,8 @@
             </tr>
         </tbody>
     </table>
-
-    <button @click="submitChecklist">Submit Checklist</button>
 </div>
+
 
 [[block page_scripts]]
 <script>
