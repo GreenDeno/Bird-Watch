@@ -56,6 +56,12 @@ def get_data():
         db.checklists.latitude,
         db.checklists.longitude
     ).as_list()
+
+    species = db().select(
+        db.species.name,
+    ).as_list() 
+
+
     #print(results[0])
     # Initialize an empty dictionary to store the results
     location_dict = {}
@@ -101,4 +107,4 @@ def get_data():
     ]
     print(coordinates_and_totals[0])
 
-    return dict(results=final_results, user_email = user_email, total=coordinates_and_totals)
+    return dict(results=final_results, user_email = user_email, total=coordinates_and_totals, species = species)
