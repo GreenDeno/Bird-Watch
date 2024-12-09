@@ -23,7 +23,14 @@
   <div id="map" style="height: 500px; width: 100%;"></div>
   <button @click="toggleMarkerPlacement">
     {{ placingMarker ? 'Stop Placing Markers' : 'Start Placing Markers' }}
-</button>
+  </button>
+
+  <button @click="toggleRectanglePlacement">
+    {{ placingRectangle ? 'Stop Drawing Rectangles' : 'Start Drawing Rectangles' }}
+  </button>
+
+
+
 </div>
 
 
