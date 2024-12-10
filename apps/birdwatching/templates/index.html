@@ -76,10 +76,6 @@ input[type="checkbox"]:hover {
     box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.6) !important; /* Force shadow persistence */
 }
 
-
-
-
-
 .search-bar {
     background-color: white; 
     color: #333;  /* Text color for search */
@@ -136,6 +132,63 @@ input[type="checkbox"]:hover {
         border-radius: 4px;
     }
 
+    .modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Modal Content */
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  width: 80%;
+  max-width: 600px;
+  text-align: left;
+}
+
+/* Close Button */
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  font-weight: bold;
+  color: #555;
+  cursor: pointer;
+}
+
+.close-button:hover {
+  color: #000;
+}
+
+/* Modal Heading */
+.modal-content h3 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+/* Modal Paragraphs */
+.modal-content p {
+  font-size: 16px;
+  color: #555;
+  margin-bottom: 15px;
+}
+
+.modal-content p strong {
+  color: #559FD5;
+}
 
 
 </style>
@@ -151,6 +204,57 @@ input[type="checkbox"]:hover {
   </h1>
 
   <div class="columns">
+
+    <div class="column is-one-quarter" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 30px;">
+      <img src='pics/waving.png' style="width: 50%; height: 200px; margin-bottom: 20px;"/>
+      <p style="font-size: 20px; text-align: center;">Welcome {{ user_email }}!</p>
+    
+      <!-- Button Container Below Image and Text -->
+      <div style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%; margin-top: 20px;">
+        <!-- Button to stats page -->
+        <a href="/birdwatching/stats" style="width: 100%; text-align: center;">
+          <button class="button" style="background-color: #83c78e; color: #ffffff; padding: 10px 20px; font-size: 16px; border-radius: 5px; border: none; cursor: pointer; width: 100%;">
+            Go to Stats
+          </button>
+        </a>
+        
+        <!-- Button to checklists page -->
+        <a href="/birdwatching/checklist" style="width: 100%; text-align: center;">
+          <button class="button" style="background-color: #83c78e; color: #ffffff; padding: 10px 20px; font-size: 16px; border-radius: 5px; border: none; cursor: pointer; width: 100%;">
+            Go to Checklists
+          </button>
+        </a>
+
+        <button class = "button" style="background-color: #83c78e; color: #ffffff; padding: 10px 20px; font-size: 16px; border-radius: 5px; border: none; cursor: pointer; width: 100%;" @click="openInfoModal" class="button" style="background-color: #559FD5; color: #ffffff; border: none; position: absolute; top: 20px; right: 20px;">
+          Page Info
+        </button>
+      </div>
+    </div>
+
+    
+  
+    <div class="column">
+      <div id="map" style="height: 500px;"></div>
+
+      <!-- Buttons below the map -->
+      <div class="button-container" style="display: flex; justify-content: space-evenly; gap: 15px;">
+        <button @click="toggleMarkerPlacement" class="button" style="background-color: #559FD5; color: #ffffff; border: none;">
+          {{ placingMarker ? 'Stop Placing Markers' : 'Start Placing Markers' }}
+        </button>
+
+        <button @click="locateUser" class="button" style="background-color: #559FD5; color: #ffffff; border: none;">Locate Me</button>
+
+        <button @click="toggleRectanglePlacement" class="button" style="background-color: #559FD5; color: #ffffff; border: none;">
+          {{ placingRectangle ? 'Stop Drawing Rectangles' : 'Start Drawing Rectangles' }}
+        </button>
+
+        <!-- Clear Markers and Rectangles Button -->
+        <button @click="clearAllMarkersAndRectangles" class="button" style="background-color: #559FD5; color: #ffffff; border: none;">
+          Clear All
+        </button>
+      </div>
+    </div>
+    
     <div class="column is-one-quarter">
 
       <p style = "font-size: 25px;">Filter by Species: </p>
@@ -185,55 +289,30 @@ input[type="checkbox"]:hover {
           <button class="button" style="background-color: #83c78e; color: #ffffff; padding: 8px 15px; font-size: 14px;" @click="clearSelections">
             Clear Selections
           </button>
+
         </div>
       </div>
     </div>
-  
-    <div class="column">
-      <div id="map" style="height: 500px;"></div>
+    
+    
+  </div>
 
-      <!-- Buttons below the map -->
-      <div class="button-container" style="display: flex; justify-content: space-evenly; gap: 15px;">
-        <button @click="toggleMarkerPlacement" class="button" style="background-color: #559FD5; color: #ffffff; border: none;">
-          {{ placingMarker ? 'Stop Placing Markers' : 'Start Placing Markers' }}
-        </button>
-
-        <button @click="locateUser" class="button" style="background-color: #559FD5; color: #ffffff; border: none;">Locate Me</button>
-
-        <button @click="toggleRectanglePlacement" class="button" style="background-color: #559FD5; color: #ffffff; border: none;">
-          {{ placingRectangle ? 'Stop Drawing Rectangles' : 'Start Drawing Rectangles' }}
-        </button>
-
-        <!-- Clear Markers and Rectangles Button -->
-        <button @click="clearAllMarkersAndRectangles" class="button" style="background-color: #559FD5; color: #ffffff; border: none;">
-          Clear All
-        </button>
+  <div v-if="infoModalVisible" class="modal-overlay">
+    <div class="modal-content">
+      <button @click="closeInfoModal" class="close-button">X</button>
+      <h3>Page Information</h3>
+      <p><strong>Start Placing Markers:</strong> This button allows you to place markers on the map to mark birdwatching spots. You can click anywhere on the map to add a marker.</p>
+      <p><strong>Locate Me:</strong> This button uses your current location and centers the map on it, making it easier for you to find your position.</p>
+      <p><strong>Start Drawing Rectangles:</strong> This button lets you draw rectangular areas on the map. These can be used to see location specific data for birdwatching.</p>
+      <p><strong>Clear All:</strong> This button clears all the markers and rectangles you have placed on the map. Use it if you want to reset the map.</p>
+      <p><strong>Go to Stats:</strong> This button redirects you to the statistics page where you can view your birdwatching data.</p>
+      <p><strong>Go to Checklists:</strong> This button takes you to the checklists page where you can add a checklist.</p>
+      <p><strong>Filter by Species:</strong> This search bar allows you to filter species and select the ones you're interested in. When Enter is pressed, it will update the density map.</p>
+      <p><strong>Selected Species:</strong> This section shows a list of species you've selected using checkboxes. You can deselect them here and start a new selection.</p>
+      <div>
+        <button @click="closeInfoModal" class="button" style="background-color: #83c78e; color: white;">Close</button>
       </div>
     </div>
-    
-    <div class="column is-one-quarter" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 30px;">
-      <img src='pics/waving.png' style="width: 50%; height: 200px; margin-bottom: 20px;"/>
-      <p style="font-size: 20px; text-align: center;">Welcome {{ user_email }}!</p>
-    
-      <!-- Button Container Below Image and Text -->
-      <div style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%; margin-top: 20px;">
-        <!-- Button to stats page -->
-        <a href="/birdwatching/stats" style="width: 100%; text-align: center;">
-          <button class="button" style="background-color: #83c78e; color: #ffffff; padding: 10px 20px; font-size: 16px; border-radius: 5px; border: none; cursor: pointer; width: 100%;">
-            Go to Stats
-          </button>
-        </a>
-        
-        <!-- Button to checklists page -->
-        <a href="/birdwatching/checklist" style="width: 100%; text-align: center;">
-          <button class="button" style="background-color: #83c78e; color: #ffffff; padding: 10px 20px; font-size: 16px; border-radius: 5px; border: none; cursor: pointer; width: 100%;">
-            Go to Checklists
-          </button>
-        </a>
-      </div>
-    </div>
-    
-    
   </div>
 </div>
 

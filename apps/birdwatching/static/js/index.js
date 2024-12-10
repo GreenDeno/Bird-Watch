@@ -3,19 +3,6 @@
 // This will be the object that will contain the Vue attributes
 let app = {};
 
-// i would love to do it by like okay so like the v if stuff so if the selected list is not empty, then we can like ynow, display total data for
-// the heatmap, but if there are some species selected, then only display the total data for thos specific species
-// and i need a search bar so like a sory by species that had a pop up where i could search for a species from the species list, and check some of them 
-// and press sentere which loads the map so that the heat map only shows the seleceted species data aka it adds the selected species to
-// the selected species list and then only displays the total data for the selected species
-// and then like if i open the search bar again, the same species are selected and i can selecyt more or deslect some, like a checklist
-// and there is a button to clear selections and go back to showing all the total data
-// so it would be nice to have a search bar where i can search for a species and select it. when selected, the species name is added to selected species
-// and maybe on the index.html there is a box that says showing these species: (selected species names) and a makred checkbox next to each name, so i can luke
-// uncheck it if i want to. and the changes are displayed on map when i press the enter button on the html page
-// and like so the deslections or selections/additions ae updated on the map when i press eneter, but i update the box of selected species when i press the species
-//name from the search bar or i unslect it from the lisyt. when i hit eneter the species box also only has the checked species names in it. 
-
 
 app.data = {
     data: function() {
@@ -38,6 +25,7 @@ app.data = {
             searchQuery: '',
             heatmapLayer: null,
             user_email: "",
+            infoModalVisible: false
         };
     },
     methods: {
@@ -50,7 +38,13 @@ app.data = {
             // Your function to load data
         },
        
-
+        openInfoModal() {
+            this.infoModalVisible = true;
+          },
+          // Close the modal
+          closeInfoModal() {
+            this.infoModalVisible = false;
+          },
 
         locateUser: function() {
             if (navigator.geolocation) {
@@ -98,9 +92,24 @@ app.data = {
                 setTimeout(() => {
                     // Ensure all popups are closed and the map state is settled before zooming
                     this.map.closePopup();
+                    this.closeAllPopups();
                 }, 100); // Adjust the timeout duration (100ms in this example)
             });
 
+        
+
+        },
+
+        closeAllPopups: function() {
+            // Close all markers popups
+            this.markers.forEach(marker => {
+                marker.closePopup();
+            });
+        
+            // Close the info modal (if open)
+            if (this.infoModalVisible) {
+                this.closeInfoModal(); // Close the modal if it's visible
+            }
         },
 
         placeMarker: function(e) {
