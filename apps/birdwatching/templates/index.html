@@ -6,13 +6,16 @@
      display: none;
 }
 #map { height: 500px; 
-       width: 800px;}
+       
+      }
 
        .title {
   text-align: center; /* Center the text inside the h1 */
   display: flex;      /* Use flexbox to align elements horizontally */
   align-items: center; /* Vertically center items inside the flex container */
   justify-content: center; /* Horizontally center the items */
+  box-shadow: 5px 5px 7px rgba(0, 0, 0, 0.6);
+  
 }
 
 .title i {
@@ -25,69 +28,215 @@
   height: 100px; /* Set the height of your image */
   vertical-align: middle; /* Aligns the image with the text */
 }
+
+input[type="checkbox"] {
+    -webkit-appearance: none;  /* Remove default styling */
+    -moz-appearance: none;     /* Firefox compatibility */
+    appearance: none;  
+    width: 15px;
+    height: 15px;
+    border: 2px solid #83c78e; /* Green border */
+    border-radius: 4px;        /* Optional: make corners rounded */
+    background-color: white;   /* Background color */
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.3s ease, border 0.3s ease;
+}
+
+
+input[type="checkbox"]:checked {
+    background-color: #c5face; /* Green background when checked */
+    border-color: #83c78e;     /* Green border when checked */
+}
+
+/* Style the checkbox when focused */
+input[type="checkbox"]:focus {
+    outline: none;
+    box-shadow: 0 0 5px rgba(131, 199, 142, 0.7); /* Focus shadow */
+}
+
+/* Optional: when the checkbox is hovered, change the border */
+input[type="checkbox"]:hover {
+    border-color: #6ea775;  /* Darker green on hover */
+}
+
+.button {
+    margin-top: 25px;
+    box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.6); /* Keep shadow always */
+    background-color: #559FD5;
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.button:focus, .button:active {
+    outline: none; /* Disable outline */
+    box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.6) !important; /* Force shadow persistence */
+}
+
+
+
+
+
+.search-bar {
+    background-color: white; 
+    color: #333;  /* Text color for search */
+    border: 1px solid #559FD5; /* Border that matches the button */
+    padding: 10px;
+    width: 100%; /* Make the input field full width */
+    margin-top: 20px;
+    box-sizing: border-box; /* Ensure padding does not affect width */
+    font-size: 16px;
+    border-radius: 5px;
+}
+
+.search-bar:focus {
+    border-color: #4087b6; /* Darken border color when focused */
+    outline: none;
+}
+ 
+.delete-button {
+        background-color: #eba285;
+        color: #333;
+        padding: 6px 12px; /* Reduced padding for smaller buttons */
+        font-size: 12px; /* Reduced font size */
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        transition: background-color 0.3s, box-shadow 0.3s;
+    }
+
+    .delete-button:hover {
+        background-color: #d4afa1;
+        color: #fff;
+        box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    .delete-button:focus {
+        outline: none;
+    }
+
+
+  
+    /* Add spacing between buttons inside the popup */
+    .popup-buttons {
+        display: flex;
+        flex-direction: column;  /* Stack buttons vertically */
+        gap: 10px;  /* Add more space between buttons */
+    }
+
+    /* Optional: Style for individual button within the popup */
+    .popup-buttons button {
+        margin: 0;  /* Remove any default margin */
+        padding: 6px 12px;
+        font-size: 12px;
+        border-radius: 4px;
+    }
+
+
+
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
      crossorigin=""/>
 
 [[end]]
-
-
-<div class="section" id="app" v-cloak>
+<div class="section" style="background-color: #f5d9ab;" id="app" v-cloak>
   <!-- Put here your Vue.js template -->
-  <h1 class="title"><i><img src='pics/rioSkateboard.png'/></i>Birdwatching<i><img src='pics/rioSkateboard.png'/></h1>
-  
-  <div class = "columns">
-  <div class ="column is-one-quarter">
-    <input v-model="searchQuery" @input="filterSpecies" placeholder="Search for species" type="text" class="search-bar">
+  <h1 class="title" style="background-color: #ffffff;">
+    <i><img src='pics/rioSkateboard.png'/></i>Birdwatching<i><img src='pics/rioSkateboard.png'/></i>
+  </h1>
 
-    <!-- Species List with Checkboxes -->
-    <div class="species-list" v-if="searchQuery">
+  <div class="columns">
+    <div class="column is-one-quarter">
+
+      <p style = "font-size: 25px;">Filter by Species: </p>
+      <input v-model="searchQuery" @input="filterSpecies" placeholder="Search for species" type="text" class="search-bar" style="border-color: #83c78e; border-radius: 5px; border-width: 3px;">
+      
+      <!-- Species List with Checkboxes -->
+      <div class="species-list" v-if="searchQuery">
         <div v-for="species in filterSpecies()" :key="species">
-            <input type="checkbox" :id="species" :value="species" v-model="selected_species">
-            <label :for="species">{{ species }}</label>
+          <input type="checkbox" :id="species" :value="species" v-model="selected_species" style="border-color: #83c78e;">
+          <label :for="species" style="margin-left: 5px;">{{ species }}</label>
         </div>
-    </div>
+      </div>
 
-    <!-- Selected Species Box -->
-    <div v-if="selected_species.length > 0">
+      <!-- Selected Species Box -->
+      <div v-if="selected_species.length > 0">
         <h3>Selected Species:</h3>
         <ul>
-            <li v-for="species in selected_species" :key="species">
-                {{ species }}
-                <button @click="deselectSpecies(species)">Deselect</button>
-            </li>
+          <li v-for="species in selected_species" :key="species">
+            {{ species }}
+            <button @click="deselectSpecies(species)" style="background-color: #f5d9ab; border: none;">
+              <i class="fa fa-trash" style="background-color: #f5d9ab; outline: none;"></i>
+            </button>
+          </li>
         </ul>
+        <div class="button-container" style="display: flex; justify-content: space-evenly; gap: 15px;">
+          <!-- Enter Button -->
+          <button class="button" style="background-color: #83c78e; color: #ffffff; padding: 8px 15px; font-size: 14px;" @click="handleEnterButtonClick">
+            Enter
+          </button>
+          
+          <!-- Clear Selections Button -->
+          <button class="button" style="background-color: #83c78e; color: #ffffff; padding: 8px 15px; font-size: 14px;" @click="clearSelections">
+            Clear Selections
+          </button>
+        </div>
+      </div>
     </div>
+  
+    <div class="column">
+      <div id="map" style="height: 500px;"></div>
 
-    <!-- Enter Button to Update Heatmap -->
-    <button @click="handleEnterButtonClick">Enter</button>
+      <!-- Buttons below the map -->
+      <div class="button-container" style="display: flex; justify-content: space-evenly; gap: 15px;">
+        <button @click="toggleMarkerPlacement" class="button" style="background-color: #559FD5; color: #ffffff; border: none;">
+          {{ placingMarker ? 'Stop Placing Markers' : 'Start Placing Markers' }}
+        </button>
+
+        <button @click="locateUser" class="button" style="background-color: #559FD5; color: #ffffff; border: none;">Locate Me</button>
+
+        <button @click="toggleRectanglePlacement" class="button" style="background-color: #559FD5; color: #ffffff; border: none;">
+          {{ placingRectangle ? 'Stop Drawing Rectangles' : 'Start Drawing Rectangles' }}
+        </button>
+
+        <!-- Clear Markers and Rectangles Button -->
+        <button @click="clearAllMarkersAndRectangles" class="button" style="background-color: #559FD5; color: #ffffff; border: none;">
+          Clear All
+        </button>
+      </div>
+    </div>
     
-    <!-- Clear Selections Button -->
-    <button @click="clearSelections">Clear Selections</button>
-
+    <div class="column is-one-quarter" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 30px;">
+      <img src='pics/waving.png' style="width: 50%; height: 200px; margin-bottom: 20px;"/>
+      <p style="font-size: 20px; text-align: center;">Welcome {{ user_email }}!</p>
+    
+      <!-- Button Container Below Image and Text -->
+      <div style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%; margin-top: 20px;">
+        <!-- Button to stats page -->
+        <a href="/birdwatching/stats" style="width: 100%; text-align: center;">
+          <button class="button" style="background-color: #83c78e; color: #ffffff; padding: 10px 20px; font-size: 16px; border-radius: 5px; border: none; cursor: pointer; width: 100%;">
+            Go to Stats
+          </button>
+        </a>
+        
+        <!-- Button to checklists page -->
+        <a href="/birdwatching/checklist" style="width: 100%; text-align: center;">
+          <button class="button" style="background-color: #83c78e; color: #ffffff; padding: 10px 20px; font-size: 16px; border-radius: 5px; border: none; cursor: pointer; width: 100%;">
+            Go to Checklists
+          </button>
+        </a>
+      </div>
+    </div>
+    
+    
   </div>
-  <div class = "column is-one-half">
-  <button @click="locateUser">Locate Me</button>
-
-
-
-
-  <div id="map" style="height: 500px;"></div>
-  <button @click="toggleMarkerPlacement">
-    {{ placingMarker ? 'Stop Placing Markers' : 'Start Placing Markers' }}
-  </button>
-
-  <button @click="toggleRectanglePlacement">
-    {{ placingRectangle ? 'Stop Drawing Rectangles' : 'Start Drawing Rectangles' }}
-  </button>
-
-  </div>
-  
-
-  </div>
-  
 </div>
+
 
 
 [[block page_scripts]]

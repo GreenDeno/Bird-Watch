@@ -37,6 +37,7 @@ app.data = {
 
             searchQuery: '',
             heatmapLayer: null,
+            user_email: "",
         };
     },
     methods: {
@@ -122,8 +123,8 @@ app.data = {
                 // Add hover interaction for the marker
                 marker.on('mouseover', () => {
                     marker.bindPopup(`
-                        <button onclick="window.location.href='/birdwatching/checklist?lat=${latLng.lat}&lng=${latLng.lng}'">Add Checklist</button>
-                        <button onclick="app.vue.removeMarker(${this.markers.indexOf(marker)})">Delete Marker</button>
+                        <button class="delete-button" onclick="window.location.href='/birdwatching/checklist?lat=${latLng.lat}&lng=${latLng.lng}'">Add Checklist</button>
+                        <button class="delete-button" onclick="app.vue.removeMarker(${this.markers.indexOf(marker)})">Delete Marker</button>
                     `).openPopup();
                 });
             }
@@ -161,7 +162,7 @@ app.data = {
                     this.previewRectangle.setBounds(bounds);
                 } else {
                     // Create a new temporary rectangle to preview
-                    this.previewRectangle = L.rectangle(bounds, { color: 'blue', weight: 2, opacity: 0.5 }).addTo(this.map);
+                    this.previewRectangle = L.rectangle(bounds, { color: '#398DCD', weight: 2, opacity: 0.5 }).addTo(this.map);
                 }
             }
         },
@@ -213,7 +214,7 @@ app.data = {
                 const bounds = L.latLngBounds(point1, point2);
 
                 // Create a rectangle using the bounds
-                const rectangle = L.rectangle(bounds, { color: 'blue', weight: 2 }).addTo(this.map);
+                const rectangle = L.rectangle(bounds, { color: '#398DCD', weight: 2 }).addTo(this.map);
 
                 // Store the rectangle for future interactions
                 this.drawing_polygons.push(rectangle);
@@ -229,8 +230,8 @@ app.data = {
                     const coordinates = `${topLeft.lat},${topLeft.lng},${bottomRight.lat},${bottomRight.lng}`;
 
                     rectangle.bindPopup(`
-                        <button onclick="window.location.href='/birdwatching/location?coords=${encodeURIComponent(coordinates)}'">Check Location Stats</button>
-                        <button onclick="app.vue.removeRectangle(${this.drawing_polygons.indexOf(rectangle)})">Delete Rectangle</button>
+                        <button class="delete-button" onclick="window.location.href='/birdwatching/location?coords=${encodeURIComponent(coordinates)}'">Check Location Stats</button>
+                        <button class="delete-button" onclick="app.vue.removeRectangle(${this.drawing_polygons.indexOf(rectangle)})">Delete Rectangle</button>
                     `).openPopup();
                 });
 
@@ -327,7 +328,19 @@ app.data = {
         },
         
         
-        
+        clearAllMarkersAndRectangles: function () {
+            // Remove all markers from the map
+            this.markers.forEach(marker => {
+                this.map.removeLayer(marker);
+            });
+            this.markers = [];  // Clear the markers array
+    
+            // Remove all rectangles from the map
+            this.drawing_polygons.forEach(rectangle => {
+                this.map.removeLayer(rectangle);
+            });
+            this.drawing_polygons = [];  // Clear the drawing_polygons array
+        },
         
 
         filterSpecies: function() {
