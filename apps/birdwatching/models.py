@@ -2,7 +2,7 @@
 This file defines the database models
 """
 
-import datetime
+from datetime import date, datetime
 import os, csv
 
 from .common import db, Field, auth
@@ -15,7 +15,7 @@ def get_user_email():
     return auth.current_user.get('email') if auth.current_user else None
 
 def get_time():
-    return datetime.datetime.utcnow()
+    return datetime.utcnow()
 
 
 # Store the total different species of birds
@@ -68,7 +68,7 @@ def handle_partial_date(input_date):
         if input_date is None:
             return None
         # If the input is already a datetime.date object, return it as is.
-        if isinstance(input_date, datetime.date):
+        if isinstance(input_date, date):
             return input_date
         # Ensure input is a string before processing.
         input_date = str(input_date)
