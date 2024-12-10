@@ -1,8 +1,6 @@
 "use strict";
 
-// This will be the object that will contain the Vue attributes
 let app = {};
-
 
 app.data = {
     data: function() {
@@ -10,18 +8,15 @@ app.data = {
             results: [],
             my_value: 1, 
             total: [],
-            map: null,  // Add a property to store the map
+            map: null,  
             filter_search: [],
-            placingMarker: false, // Flag to track if user is in "place marker" mode
-            markers: [], // Store placed markers
+            placingMarker: false, 
+            markers: [], 
             species: [],
             selected_species: [],
-            
-            //rectangle stuff
             placingRectangle: false,
-            drawing_coords: [],  // Array to store rectangle coordinates
+            drawing_coords: [],  
             drawing_polygons: [], 
-
             searchQuery: '',
             heatmapLayer: null,
             user_email: "",
@@ -29,36 +24,25 @@ app.data = {
         };
     },
     methods: {
-        // Example function
-        my_function: function() {
-            this.my_value += 1;
-        },
 
-        get_data: function() {
-            // Your function to load data
-        },
-       
         openInfoModal() {
             this.infoModalVisible = true;
-          },
-          // Close the modal
-          closeInfoModal() {
+        },
+     
+        closeInfoModal() {
             this.infoModalVisible = false;
-          },
+        },
 
         locateUser: function() {
             if (navigator.geolocation) {
-                // Get the user's current position
+               
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         const lat = position.coords.latitude;
                         const lng = position.coords.longitude;
 
-                        // Center the map on the user's location and zoom in
-                        this.map.setView([lat, lng], 15);  // Set the zoom level to 15
+                        this.map.setView([lat, lng], 15);  
 
-                        // Optionally, add a marker to indicate the user's location
-                        //L.marker([lat, lng]).addTo(this.map).bindPopup('You are here').openPopup();
                         L.marker([lat, lng]).addTo(this.map);
                     },
                     (error) => {
@@ -72,16 +56,13 @@ app.data = {
         },
 
         init: function() {
-            // Initialize the map and store it in `this.map`
             this.map = L.map('map').setView([51.505, -0.09], 13);
 
-            // Add tile layer to the map
             L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             }).addTo(this.map);
 
-            // Optional: trigger resize after adding tile layer
             setTimeout(function () {
                 window.dispatchEvent(new Event("resize"));
             }, 100);
@@ -90,46 +71,36 @@ app.data = {
 
             this.map.on('zoomstart', () => {
                 setTimeout(() => {
-                    // Ensure all popups are closed and the map state is settled before zooming
                     this.map.closePopup();
                     this.closeAllPopups();
-                }, 100); // Adjust the timeout duration (100ms in this example)
+                }, 100); 
             });
-
-        
-
         },
 
         closeAllPopups: function() {
-            // Close all markers popups
             this.markers.forEach(marker => {
                 marker.closePopup();
             });
-        
-            // Close the info modal (if open)
             if (this.infoModalVisible) {
-                this.closeInfoModal(); // Close the modal if it's visible
+                this.closeInfoModal(); 
             }
         },
 
         placeMarker: function(e) {
-        
             if (this.placingMarker) {
                 const latLng = e.latlng;
 
                 const birdIcon = L.icon({
-                    iconUrl: 'icons/bird.png', // Path to your custom image
-                    iconSize: [50, 50], // Size of the icon (adjust as needed)
-                    iconAnchor: [25, 50], // The point of the icon that will be at the marker's location (adjust as needed)
-                    popupAnchor: [0, -50], // The point from which the popup will open (adjust if needed)
+                    iconUrl: 'icons/bird.png', 
+                    iconSize: [50, 50], 
+                    iconAnchor: [25, 50], 
+                    popupAnchor: [0, -50], 
                 });
 
                 const marker = L.marker(latLng, { icon: birdIcon }).addTo(this.map);
 
-                // Store the marker for future interactions
                 this.markers.push(marker);
 
-                // Add hover interaction for the marker
                 marker.on('mouseover', () => {
                     marker.bindPopup(`
                         <button class="delete-button" onclick="window.location.href='/birdwatching/checklist?lat=${latLng.lat}&lng=${latLng.lng}'">Add Checklist</button>
@@ -139,8 +110,7 @@ app.data = {
             }
         },
 
-        toggleMarkerPlacement: function() {
-            
+        toggleMarkerPlacement: function() {   
             if (this.placingRectangle) {
                 this.toggleRectanglePlacement();
             }
@@ -151,26 +121,20 @@ app.data = {
             const marker = this.markers[index];
             if (marker) {
                 this.map.removeLayer(marker);
-                this.markers.splice(index, 1); // Remove from the markers array
+                this.markers.splice(index, 1); 
             }
         },
 
-
-        // Event listener to handle mouse movement for previewing the rectangle
         mousemove_listener: function (e) {
-            // If the first point is set, we can update the preview rectangle
             if (this.drawing_coords.length === 1) {
                 const point1 = this.drawing_coords[0];
                 const point2 = e.latlng;
 
-                // Determine the bounds of the preview rectangle
                 const bounds = L.latLngBounds(point1, point2);
 
-                // If a temporary rectangle exists, update its position
                 if (this.previewRectangle) {
                     this.previewRectangle.setBounds(bounds);
                 } else {
-                    // Create a new temporary rectangle to preview
                     this.previewRectangle = L.rectangle(bounds, { color: '#398DCD', weight: 2, opacity: 0.5 }).addTo(this.map);
                 }
             }
@@ -181,25 +145,21 @@ app.data = {
                 this.toggleMarkerPlacement();
             }
 
-            // Stop drawing the preview rectangle before starting a new one
             if (this.previewRectangle) {
                 this.map.removeLayer(this.previewRectangle);
-                this.previewRectangle = null; // Clear the preview rectangle
+                this.previewRectangle = null; 
             }
 
             this.placingRectangle = !this.placingRectangle;
 
             if (this.placingRectangle) {
-                // Reset the drawing state for a new rectangle
                 this.drawing_coords = [];
-                this.map.on('click', this.click_listener);  // Start capturing clicks for the new rectangle
-                this.map.on('mousemove', this.mousemove_listener);  // Start updating the rectangle preview
+                this.map.on('click', this.click_listener);  
+                this.map.on('mousemove', this.mousemove_listener);  
             } else {
-                // Stop drawing rectangles
                 this.map.off('click', this.click_listener);
-                this.map.off('mousemove', this.mousemove_listener);  // Stop updating the rectangle preview
+                this.map.off('mousemove', this.mousemove_listener);
 
-                // Ensure preview rectangle is removed when done
                 if (this.previewRectangle) {
                     this.map.removeLayer(this.previewRectangle);
                     this.previewRectangle = null;
@@ -208,31 +168,20 @@ app.data = {
         },
 
         click_listener: function (e) {
-            // Add points to the rectangle, up to 2 points
             if (this.drawing_coords.length < 2) {
                 this.drawing_coords.push(e.latlng);
             }
 
-            // If two points are set, complete the rectangle
             if (this.drawing_coords.length === 2) {
-                // Get the two points (corners of the rectangle)
                 const point1 = this.drawing_coords[0];
                 const point2 = this.drawing_coords[1];
-
-                // Determine the bounds of the rectangle
                 const bounds = L.latLngBounds(point1, point2);
-
-                // Create a rectangle using the bounds
                 const rectangle = L.rectangle(bounds, { color: '#398DCD', weight: 2 }).addTo(this.map);
 
-                // Store the rectangle for future interactions
                 this.drawing_polygons.push(rectangle);
 
-                // Optionally, add functionality to remove or edit rectangles
                 rectangle.on('mouseover', () => {
                     const latlngs = rectangle.getBounds();
-
-                    // Remove any existing popups on the rectangle before binding a new one
                     rectangle.unbindPopup();
                     const topLeft = latlngs.getNorthWest();
                     const bottomRight = latlngs.getSouthEast();
@@ -244,9 +193,7 @@ app.data = {
                     `).openPopup();
                 });
 
-                // Reset drawing state for the next rectangle
                 this.drawing_coords = [];
-                // Remove the preview rectangle once the final rectangle is drawn
                 if (this.previewRectangle) {
                     this.map.removeLayer(this.previewRectangle);
                     this.previewRectangle = null;
@@ -254,19 +201,16 @@ app.data = {
             }
         },
 
-        // Remove a rectangle from the map
         removeRectangle: function(index) {
             const rectangle = this.drawing_polygons[index];
             if (rectangle) {
                 this.map.removeLayer(rectangle);
-                this.drawing_polygons.splice(index, 1); // Remove from the markers array
+                this.drawing_polygons.splice(index, 1); 
             }
         },
        
         updateHeatmap: function() {
             console.log("Update Heatmap triggered");
-        
-            // Ensure map and data are initialized
             if (!this.map || !this.results || this.results.length === 0) {
                 console.warn("Map or data is not initialized properly.");
                 return;
@@ -274,18 +218,14 @@ app.data = {
         
             let selectedData = [];
         
-            // If no species are selected, use all species data from the results
             if (this.selected_species.length === 0) {
-                // Use all species counts
                 this.results.forEach(location => {
                     const [lat, lng] = location.location_key.split(',').map(coord => parseFloat(coord));
-                    const totalCount = location.total_count; // Use the total count for all species at this location
+                    const totalCount = location.total_count; 
                     selectedData.push([lat, lng, totalCount]);
                 });
             } else {
-                // Filter species counts for selected species
                 this.results.forEach(location => {
-                    // Filter species counts to include only the selected species
                     let filteredSpeciesCounts = {};
                     this.selected_species.forEach(species => {
                         if (location.species_counts[species]) {
@@ -293,33 +233,25 @@ app.data = {
                         }
                     });
         
-                    // If there are any selected species at this location, add it to the selectedData array
                     if (Object.keys(filteredSpeciesCounts).length > 0) {
                         const [lat, lng] = location.location_key.split(',').map(coord => parseFloat(coord));
-                        // Sum the counts of the selected species at this location
                         const totalCount = Object.values(filteredSpeciesCounts).reduce((sum, count) => sum + count, 0);
                         selectedData.push([lat, lng, totalCount]);
                     }
                 });
             }
         
-            //console.log("Selected data:", selectedData);
-        
-            // If no data is selected (e.g., no matching species or no species selected), exit early
             if (selectedData.length === 0) {
                 console.warn("No data available for selected species.");
                 return;
             }
         
-            // Get max value from the selected data for heatmap scaling
-            let maxTotalCount = Math.max(...selectedData.map(item => item[2])); // Get the max count for scaling
+            let maxTotalCount = Math.max(...selectedData.map(item => item[2])); 
         
-            // Remove the previous heatmap layer if exists
             if (this.heatmapLayer) {
                 this.map.removeLayer(this.heatmapLayer);
             }
         
-            // Create and add a new heatmap layer with updated data
             this.heatmapLayer = L.heatLayer(selectedData, {
                 radius: 24,
                 minOpacity: 0.4,
@@ -338,61 +270,52 @@ app.data = {
         
         
         clearAllMarkersAndRectangles: function () {
-            // Remove all markers from the map
             this.markers.forEach(marker => {
                 this.map.removeLayer(marker);
             });
-            this.markers = [];  // Clear the markers array
-    
-            // Remove all rectangles from the map
+            this.markers = []; 
             this.drawing_polygons.forEach(rectangle => {
                 this.map.removeLayer(rectangle);
             });
-            this.drawing_polygons = [];  // Clear the drawing_polygons array
+            this.drawing_polygons = [];  
         },
         
-
         filterSpecies: function() {
-            // Filter the species list based on the search query
             return this.species.filter(species => species.toLowerCase().includes(this.searchQuery.toLowerCase()));
         },
     
         toggleSpeciesSelection: function(speciesName) {
             const index = this.selected_species.indexOf(speciesName);
             if (index === -1) {
-                // Add species to the selected list
                 this.selected_species.push(speciesName);
             } else {
-                // Remove species from the selected list
                 this.selected_species.splice(index, 1);
             }
         },
 
         handleEnterButtonClick: function() {
-            // Clear the search query
             this.searchQuery = '';
-            // Optionally update the heatmap after clearing the search query
             this.updateHeatmap();
         },
     
         clearSelections: function() {
-            // Clear the selected species
             this.selected_species = [];
             this.updateHeatmap(); 
         },
+
         deselectSpecies: function(species) {
             const index = this.selected_species.indexOf(species);
             if (index !== -1) {
-                this.selected_species.splice(index, 1); // Remove species from selected list
+                this.selected_species.splice(index, 1); 
             }
-            this.updateHeatmap(); // Update heatmap after deselecting
+            this.updateHeatmap();
         },
         
     
     },
+
     mounted: function () {
         this.$nextTick(() => {
-            // Initialize the map by calling the init method
             this.init();
             this.locateUser();
         });
@@ -400,23 +323,17 @@ app.data = {
     
 };
 
-// Vue app initialization
 app.vue = Vue.createApp(app.data).mount("#app");
 
-// Load data and update the heatmap
 app.load_data = function () {
     axios.get(get_data_url).then(function (r) {
         app.vue.results = r.data.results;
         app.vue.user_email = r.data.user_email;   
         app.vue.total = r.data.total;
-        //app.vue.species = r.data.species;
         app.vue.species = r.data.species.map(species => species.name);
-
-      
-        app.vue.updateHeatmap(); // Update the heatmap once the data is loaded
+        app.vue.updateHeatmap(); 
     });
 }
 
-// Trigger loading of data
 app.load_data();
 
