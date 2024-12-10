@@ -34,6 +34,9 @@ app.data = {
             placingRectangle: false,
             drawing_coords: [],  // Array to store rectangle coordinates
             drawing_polygons: [], 
+
+            searchQuery: '',
+            heatmapLayer: null,
         };
     },
     methods: {
@@ -45,32 +48,7 @@ app.data = {
         get_data: function() {
             // Your function to load data
         },
-
-        updateHeatmap: function() {
-            if (!this.map || !this.total || this.total.length === 0) {
-                console.warn("Map or data is not initialized properly.");
-                return; // Avoid proceeding if map or data is not ready
-            }
-
-            let maxTotalCount = Math.max(...this.total.map(item => item[2]));
-            console.log(this.total[0]);
-            
-            // Add the heatmap layer to the map
-            var heat = L.heatLayer(this.total, {
-                radius: 24,  // Controls the size of the heatmap radius
-                minOpacity: 0.4,
-                maxZoom: 18,  // Adjust as needed for zoom level
-                gradient: {
-                    0.2: 'blue',  // Low intensity values (e.g., 0 to 2) will be blue
-                    0.5: 'cyan',  // Medium intensity values (e.g., 2 to 5) will be cyan
-                    0.7: 'lime',  // Higher intensity values (e.g., 5 to 7) will be lime
-                    0.8: 'yellow',// Even higher intensity values (e.g., 7 to 9) will be yellow
-                    1.0: 'red'    // Highest intensity values (e.g., 9 and above) will be red
-                },
-                max: maxTotalCount,
-                blur: 15,
-            }).addTo(this.map); // Use this.map, not 'map'
-        },
+       
 
 
         locateUser: function() {
@@ -167,107 +145,6 @@ app.data = {
             }
         },
 
-        //rectangle stuff
-
-        /*
-        
-        toggleRectanglePlacement: function() {
-            if (this.placingMarker) {
-                this.toggleMarkerPlacement();
-            }
-            this.placingRectangle = !this.placingRectangle;
-            if (this.placingRectangle) {
-                // Reset the drawing state for a new rectangle
-                this.drawing_coords = [];
-                this.map.on('click', this.click_listener);  // Start capturing clicks for the new rectangle
-                this.map.on('mousemove', this.mousemove_listener);  // Start updating the rectangle preview
-            } else {
-                // Stop drawing rectangles
-                this.map.off('click', this.click_listener);
-                this.map.off('mousemove', this.mousemove_listener);  // Stop updating the rectangle preview
-                if (this.previewRectangle) {
-                    this.map.removeLayer(this.previewRectangle);  // Remove preview rectangle when done
-                }
-            }
-        },
-        
-        // Event listener to handle click for drawing the rectangle
-        click_listener: function (e) {
-            // Add points to the rectangle, up to 2 points
-            if (this.drawing_coords.length < 2) {
-                this.drawing_coords.push(e.latlng);
-            }
-        
-            // If two points are set, complete the rectangle
-            if (this.drawing_coords.length === 2) {
-                // Get the two points (corners of the rectangle)
-                const point1 = this.drawing_coords[0];
-                const point2 = this.drawing_coords[1];
-        
-                // Determine the bounds of the rectangle
-                const bounds = L.latLngBounds(point1, point2);
-        
-                // Create a rectangle using the bounds
-                const rectangle = L.rectangle(bounds, { color: 'blue', weight: 2 }).addTo(this.map);
-        
-                // Store the rectangle for future interactions
-                this.drawing_polygons.push(rectangle);
-        
-         
-
-                rectangle.on('mouseover', () => {
-                    // Remove any existing popups on the rectangle before binding a new one
-                    const latlngs = rectangle.getBounds();
-
-                    rectangle.unbindPopup(); // Remove any previous popup bindings
-                    // Get the coordinates of the two corners (top-left and bottom-right)
-                    const topLeft = latlngs.getNorthWest();
-                    const bottomRight = latlngs.getSouthEast();
-                    const coordinates = `${topLeft.lat},${topLeft.lng},${bottomRight.lat},${bottomRight.lng}`;
-                    
-
-
-                    rectangle.bindPopup(`
-                        <button onclick="window.location.href='/birdwatching/location?coords=${encodeURIComponent(coordinates)}'">Check Location Stats</button>
-                        <button onclick="app.vue.removeRectangle(${this.drawing_polygons.indexOf(rectangle)})">Delete Rectangle</button>
-                    `).openPopup();
-                });
-                
-
-             
-
-        
-                // Reset drawing state for the next rectangle
-                this.drawing_coords = [];
-                // Remove the preview rectangle once the final rectangle is drawn
-                if (this.previewRectangle) {
-                    this.map.removeLayer(this.previewRectangle);
-                }
-            }
-        },
-        
-        // Event listener to handle mouse movement for previewing the rectangle
-        mousemove_listener: function (e) {
-            // If the first point is set, we can update the preview rectangle
-            if (this.drawing_coords.length === 1) {
-                const point1 = this.drawing_coords[0];
-                const point2 = e.latlng;
-        
-                // Determine the bounds of the preview rectangle
-                const bounds = L.latLngBounds(point1, point2);
-        
-                // If a temporary rectangle exists, update its position
-                if (this.previewRectangle) {
-                    this.previewRectangle.setBounds(bounds);
-                } else {
-                    // Create a new temporary rectangle to preview
-                    this.previewRectangle = L.rectangle(bounds, { color: 'blue', weight: 2, opacity: 0.5 }).addTo(this.map);
-                }
-            }
-        },
-        */
-
-        
 
         // Event listener to handle mouse movement for previewing the rectangle
         mousemove_listener: function (e) {
@@ -375,11 +252,122 @@ app.data = {
                 this.drawing_polygons.splice(index, 1); // Remove from the markers array
             }
         },
-
+       
+        updateHeatmap: function() {
+            console.log("Update Heatmap triggered");
+        
+            // Ensure map and data are initialized
+            if (!this.map || !this.results || this.results.length === 0) {
+                console.warn("Map or data is not initialized properly.");
+                return;
+            }
+        
+            let selectedData = [];
+        
+            // If no species are selected, use all species data from the results
+            if (this.selected_species.length === 0) {
+                // Use all species counts
+                this.results.forEach(location => {
+                    const [lat, lng] = location.location_key.split(',').map(coord => parseFloat(coord));
+                    const totalCount = location.total_count; // Use the total count for all species at this location
+                    selectedData.push([lat, lng, totalCount]);
+                });
+            } else {
+                // Filter species counts for selected species
+                this.results.forEach(location => {
+                    // Filter species counts to include only the selected species
+                    let filteredSpeciesCounts = {};
+                    this.selected_species.forEach(species => {
+                        if (location.species_counts[species]) {
+                            filteredSpeciesCounts[species] = location.species_counts[species];
+                        }
+                    });
+        
+                    // If there are any selected species at this location, add it to the selectedData array
+                    if (Object.keys(filteredSpeciesCounts).length > 0) {
+                        const [lat, lng] = location.location_key.split(',').map(coord => parseFloat(coord));
+                        // Sum the counts of the selected species at this location
+                        const totalCount = Object.values(filteredSpeciesCounts).reduce((sum, count) => sum + count, 0);
+                        selectedData.push([lat, lng, totalCount]);
+                    }
+                });
+            }
+        
+            //console.log("Selected data:", selectedData);
+        
+            // If no data is selected (e.g., no matching species or no species selected), exit early
+            if (selectedData.length === 0) {
+                console.warn("No data available for selected species.");
+                return;
+            }
+        
+            // Get max value from the selected data for heatmap scaling
+            let maxTotalCount = Math.max(...selectedData.map(item => item[2])); // Get the max count for scaling
+        
+            // Remove the previous heatmap layer if exists
+            if (this.heatmapLayer) {
+                this.map.removeLayer(this.heatmapLayer);
+            }
+        
+            // Create and add a new heatmap layer with updated data
+            this.heatmapLayer = L.heatLayer(selectedData, {
+                radius: 24,
+                minOpacity: 0.4,
+                maxZoom: 18,
+                gradient: {
+                    0.2: 'blue',
+                    0.5: 'cyan',
+                    0.7: 'lime',
+                    0.8: 'yellow',
+                    1.0: 'red'
+                },
+                max: maxTotalCount,
+                blur: 15,
+            }).addTo(this.map);
+        },
         
         
-    }, 
+        
+        
 
+        filterSpecies: function() {
+            // Filter the species list based on the search query
+            return this.species.filter(species => species.toLowerCase().includes(this.searchQuery.toLowerCase()));
+        },
+    
+        toggleSpeciesSelection: function(speciesName) {
+            const index = this.selected_species.indexOf(speciesName);
+            if (index === -1) {
+                // Add species to the selected list
+                this.selected_species.push(speciesName);
+            } else {
+                // Remove species from the selected list
+                this.selected_species.splice(index, 1);
+            }
+        },
+
+        handleEnterButtonClick: function() {
+            // Clear the search query
+            this.searchQuery = '';
+            // Optionally update the heatmap after clearing the search query
+            this.updateHeatmap();
+        },
+    
+        clearSelections: function() {
+            // Clear the selected species
+            this.selected_species = [];
+            this.updateHeatmap(); 
+        },
+        deselectSpecies: function(species) {
+            const index = this.selected_species.indexOf(species);
+            if (index !== -1) {
+                this.selected_species.splice(index, 1); // Remove species from selected list
+            }
+            this.updateHeatmap(); // Update heatmap after deselecting
+        },
+        
+    
+    },
     mounted: function () {
         this.$nextTick(() => {
             // Initialize the map by calling the init method
@@ -387,6 +375,7 @@ app.data = {
             this.locateUser();
         });
     }
+    
 };
 
 // Vue app initialization
@@ -398,7 +387,10 @@ app.load_data = function () {
         app.vue.results = r.data.results;
         app.vue.user_email = r.data.user_email;   
         app.vue.total = r.data.total;
-        app.vue.species = r.data.species;
+        //app.vue.species = r.data.species;
+        app.vue.species = r.data.species.map(species => species.name);
+
+      
         app.vue.updateHeatmap(); // Update the heatmap once the data is loaded
     });
 }

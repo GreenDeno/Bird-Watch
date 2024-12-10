@@ -20,7 +20,11 @@
   <h1 class="title"><i class="fa-solid fa-cube"></i> Title</h1>
   
   <button @click="locateUser">Locate Me</button>
-  <div id="map" style="height: 500px; width: 100%;"></div>
+
+
+
+
+  <div id="map" style="height: 500px; width: 50%;"></div>
   <button @click="toggleMarkerPlacement">
     {{ placingMarker ? 'Stop Placing Markers' : 'Start Placing Markers' }}
   </button>
@@ -30,7 +34,33 @@
   </button>
 
 
+  <input v-model="searchQuery" @input="filterSpecies" placeholder="Search for species" type="text" class="search-bar">
 
+    <!-- Species List with Checkboxes -->
+    <div class="species-list" v-if="searchQuery">
+        <div v-for="species in filterSpecies()" :key="species">
+            <input type="checkbox" :id="species" :value="species" v-model="selected_species">
+            <label :for="species">{{ species }}</label>
+        </div>
+    </div>
+
+    <!-- Selected Species Box -->
+    <div v-if="selected_species.length > 0">
+        <h3>Selected Species:</h3>
+        <ul>
+            <li v-for="species in selected_species" :key="species">
+                {{ species }}
+                <button @click="deselectSpecies(species)">Deselect</button>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Enter Button to Update Heatmap -->
+    <button @click="handleEnterButtonClick">Enter</button>
+    
+    <!-- Clear Selections Button -->
+    <button @click="clearSelections">Clear Selections</button>
+  
 </div>
 
 

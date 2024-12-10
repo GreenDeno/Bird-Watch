@@ -61,6 +61,11 @@ def get_data():
         db.species.name,
     ).as_list() 
 
+    species_names = [species_item['name'] for species_item in species]
+
+
+  
+
 
     #print(results[0])
     # Initialize an empty dictionary to store the results
@@ -100,11 +105,11 @@ def get_data():
     ]
     
     # Output the final results
-    print(final_results[0])
+    #print("hello" + str(final_results))
     coordinates_and_totals = [
         [float(location_key.split(',')[0]), float(location_key.split(',')[1]), species_counts['total_count']]
         for location_key, species_counts in location_dict.items()
     ]
-    print(coordinates_and_totals[0])
+  
 
     return dict(results=final_results, user_email = user_email, total=coordinates_and_totals, species = species)
