@@ -7,6 +7,24 @@
 }
 #map { height: 500px; 
        width: 800px;}
+
+       .title {
+  text-align: center; /* Center the text inside the h1 */
+  display: flex;      /* Use flexbox to align elements horizontally */
+  align-items: center; /* Vertically center items inside the flex container */
+  justify-content: center; /* Horizontally center the items */
+}
+
+.title i {
+  display: inline-block;  /* Keep the image inline with the text */
+  margin-right: 10px;     /* Add some space between the image and the text */
+}
+
+.title i img {
+  width: 100px;  /* Set the width of your image */
+  height: 100px; /* Set the height of your image */
+  vertical-align: middle; /* Aligns the image with the text */
+}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
@@ -17,24 +35,11 @@
 
 <div class="section" id="app" v-cloak>
   <!-- Put here your Vue.js template -->
-  <h1 class="title"><i class="fa-solid fa-cube"></i> Title</h1>
+  <h1 class="title"><i><img src='pics/rioSkateboard.png'/></i>Birdwatching<i><img src='pics/rioSkateboard.png'/></h1>
   
-  <button @click="locateUser">Locate Me</button>
-
-
-
-
-  <div id="map" style="height: 500px; width: 50%;"></div>
-  <button @click="toggleMarkerPlacement">
-    {{ placingMarker ? 'Stop Placing Markers' : 'Start Placing Markers' }}
-  </button>
-
-  <button @click="toggleRectanglePlacement">
-    {{ placingRectangle ? 'Stop Drawing Rectangles' : 'Start Drawing Rectangles' }}
-  </button>
-
-
-  <input v-model="searchQuery" @input="filterSpecies" placeholder="Search for species" type="text" class="search-bar">
+  <div class = "columns">
+  <div class ="column is-one-quarter">
+    <input v-model="searchQuery" @input="filterSpecies" placeholder="Search for species" type="text" class="search-bar">
 
     <!-- Species List with Checkboxes -->
     <div class="species-list" v-if="searchQuery">
@@ -60,6 +65,27 @@
     
     <!-- Clear Selections Button -->
     <button @click="clearSelections">Clear Selections</button>
+
+  </div>
+  <div class = "column is-one-half">
+  <button @click="locateUser">Locate Me</button>
+
+
+
+
+  <div id="map" style="height: 500px;"></div>
+  <button @click="toggleMarkerPlacement">
+    {{ placingMarker ? 'Stop Placing Markers' : 'Start Placing Markers' }}
+  </button>
+
+  <button @click="toggleRectanglePlacement">
+    {{ placingRectangle ? 'Stop Drawing Rectangles' : 'Start Drawing Rectangles' }}
+  </button>
+
+  </div>
+  
+
+  </div>
   
 </div>
 
