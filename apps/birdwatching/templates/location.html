@@ -1,22 +1,159 @@
 [[extend 'layout.html']]
 
 <style>
-[v-cloak] {
-     display: none;
-}
+    [v-cloak] {
+        display: none;
+    }
+
+    .chart-container {
+        width: 100%;
+        height: 500px;
+        position: relative;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .species-list, .contributors-list {
+        max-height: 300px;
+        overflow-y: auto;
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .species-list li, .contributors-list li {
+        cursor: pointer;
+        padding: 12px;
+        transition: background-color 0.3s, color 0.3s;
+        border-radius: 4px;
+    }
+
+    .species-list li.is-active {
+        background-color: #4e9fd1;
+        color: white;
+    }
+
+    .species-list li:hover, .contributors-list li:hover {
+        background-color: #f1f1f1;
+    }
+
+    .title {
+        font-size: 2em;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    .subtitle {
+        font-size: 1.25em;
+        font-weight: 500;
+        color: #666;
+        margin-bottom: 10px;
+    }
+
+    .summary-info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 15px;
+    }
+
+    .summary-item {
+        text-align: center;
+        flex: 1;
+    }
+
+    .summary-item h2 {
+        font-size: 1.5em;
+        font-weight: 500;
+        color: #777;
+        margin-bottom: 8px;
+    }
+
+    .summary-item p.title {
+        font-size: 2em;
+        font-weight: 700;
+        color: #3273dc;
+    }
+
+    .box {
+        margin-bottom: 20px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .columns {
+        display: flex;
+        gap: 20px;
+        justify-content: space-between;
+    }
+
+    .column.is-one-quarter {
+        flex: 0 0 25%;
+    }
+
+    .column.is-three-quarters {
+        flex: 0 0 75%;
+    }
+
+    @media (max-width: 768px) {
+        .column {
+            flex: 0 0 100%;
+        }
+    }
 </style>
 
-
 <div class="section" id="app" v-cloak>
-  <!-- Put here your Vue.js template -->
-  <h1 class="title"><i class="fa-solid fa-cube"></i> Title</h1>
-  <p>This is location page</p>
+    <div class="summary-info">
+        <h1 class="title"><i class="fa-solid fa-cube"></i> Region Information</h1>
+        <div class="summary-item">
+            <h2 class="subtitle"><i class="fas fa-eye"></i> Total Sightings in Region</h2>
+            <p class="title">{{ totalSightingsUpdate }}</p>
+        </div>
+    </div>
+
+    <div class="columns">
+        <div class="column is-one-quarter">
+            <div class="species-list box">
+                <h3 class="subtitle">Species Observed</h3>
+                <ul>
+                    <li v-for="species in sightings" :key="species.species" @click="selectSpecies(species.species)" :class="{ 'is-active': selectedSpecies === species.species }">
+                        {{ species.species }}
+                    </li>
+                </ul>
+            </div>
+            <div class="contributors-list box">
+                <h3 class="subtitle">Top Contributors</h3>
+                <ul>
+                    <li v-for="(observer_id, count) in contributorsList" :key="observer_id">
+                        {{ observer_id }} ({{ count }})
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="column is-three-quarters">
+            <div class="box">
+                <div class="chart-container">
+                    <canvas ref="speciesGraph"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-
 [[block page_scripts]]
-<!-- Loads the index-specific js for Vue -->
 <script>
+    let coords = JSON.parse('[[=XML(coords)]]');
+    let get_bird_sightings_url = "[[=XML(get_bird_sightings_url)]]";
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
 <script src="js/location.js"></script>
 [[end]]
