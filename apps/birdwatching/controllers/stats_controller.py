@@ -30,4 +30,11 @@ def get_user_sightings():
         position = [checklist.latitude, checklist.longitude]
         date = checklist.observation_date
 
+        sightings.append({
+            'name': name,
+            'count': count,
+            'position': position,
+            'date': date
+        })
+
     return dict(sightings=sightings)
