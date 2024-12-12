@@ -4,6 +4,45 @@
 [v-cloak] {
     display: none;
 }
+
+.container {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 20px;
+}
+
+.scrollable-box {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    width: 40%;
+}
+
+.table-container {
+    flex: 1;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table th, table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+}
+
+table th {
+    background-color: #f9f9f9;
+}
+
+table td input {
+    width: 50px;
+    text-align: center;
+}
 </style>
 
 <div class="section" id="app" v-cloak>
@@ -12,43 +51,44 @@
     <!-- Submit Checklist Button at the Top -->
     <button @click="submitChecklist">Submit Checklist</button>
 
-    <!-- Checklist form -->
-    <div>
-        <input type="text" placeholder="Search species..." v-model="speciesSearch">
-        <ul>
-            <li v-for="s in species.filter(sp => sp.name.toLowerCase().includes(speciesSearch.toLowerCase()))" :key="s.id">
-                {{ s.name }}
-                <!-- Input field for count -->
-                <!-- <input type="number" v-model="speciesInput[s.id]" min="0" /> -->
-                <button @click="addSpeciesToChecklist(s.name, speciesInput[s.id])">Add</button>
-            </li>
-        </ul>
+    <div class="container">
+        <!-- Scrollable box with species -->
+        <div class="scrollable-box">
+            <input type="text" placeholder="Search species..." v-model="speciesSearch" style="width: 100%; margin-bottom: 10px;">
+            <ul>
+                <li v-for="s in species.filter(sp => sp.name.toLowerCase().includes(speciesSearch.toLowerCase()))" :key="s.id">
+                    {{ s.name }}
+                    <button @click="addSpeciesToChecklist(s.name, speciesInput[s.id])">Add</button>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Table for Checklist -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Species</th>
+                        <th>Count</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(item, index) in checklist" :key="index">
+                        <td>{{ item.species }}</td>
+                        <td>
+                            <input type="number" v-model="item.count" min="0" />
+                        </td>
+                        <td>
+                            <button @click="incrementCount(index)">+</button>
+                            <button @click="removeFromChecklist(index)">Remove</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
-
-    <!-- Table for Checklist -->
-    <table>
-        <thead>
-            <tr>
-                <th>Species</th>
-                <th>Count</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr v-for="(item, index) in checklist" :key="index">
-                <td>{{ item.species }}</td>
-                <td>
-                    <input type="number" v-model="item.count" min="0" />
-                </td>
-                <td>
-                    <button @click="incrementCount(index)">+</button>
-                    <button @click="removeFromChecklist(index)">Remove</button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
 </div>
-
 
 [[block page_scripts]]
 <script>

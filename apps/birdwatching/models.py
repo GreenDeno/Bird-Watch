@@ -118,6 +118,18 @@ if db(db.checklists).isempty():
                 if observation_date is None:
                     print(f"Skipping row due to invalid date: {row}")
                     continue  # Skip rows with invalid dates
+                
+                db.checklists.insert(
+                sample_event_identifier=row[0],
+                latitude=row[1],
+                longitude=row[2],
+                observation_date=observation_date,
+                # observation_date=row[3],
+                observation_time=row[4],
+                # observation_duration=row[6],
+                observation_duration=observation_duration,
+                observer_id=row[5],
+            )
             except ValueError as e:
                 print(f"Date parsing error: {e} in row {row}")
                 continue  # Skip invalid rows
@@ -130,17 +142,6 @@ if db(db.checklists).isempty():
             # except ValueError:
             #     observation_date = None 
 
-            db.checklists.insert(
-                sample_event_identifier=row[0],
-                latitude=row[1],
-                longitude=row[2],
-                observation_date=observation_date,
-                # observation_date=row[3],
-                observation_time=row[4],
-                # observation_duration=row[6],
-                observation_duration=observation_duration,
-                observer_id=row[5],
-            )
 
 if db(db.sightings).isempty():
     with open(os.path.join(current_dir, "samples", "sightings.csv"), 'r') as f:

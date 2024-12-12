@@ -30,6 +30,7 @@ def validate_date(date_string):
 @action.uses(db, auth)
 def submit_checklist():
     data = request.json
+    
     # checklist_date = data.get("observation_date")
 
     # observation_date = handle_partial_date(checklist_date)
@@ -37,15 +38,43 @@ def submit_checklist():
     #     return dict(success=False, message="Invalid date format.")
 
     try:
-        db.checklists.insert(
-            sample_event_identifier=f"event-{auth.current_user.get('id')}-{db(db.checklists).count() + 1}",
-            latitude=float(data.get("lat", 0)),
-            longitude=float(data.get("lng", 0)),
-            observation_date=request.now.date(),
-            observation_time=request.now.time(),
-            observer_id=auth.current_user.get('email'),
-        )
-        return dict(success=True, message="Checklist submitted successfully.")
+        print("Data received from frontend:", data)
+        try:
+            current_date = datetime.now().date()
+            current_time = datetime.now().time()
+            # Insert into the checklists table
+            sample_event_identifier = f"event-{auth.current_user.get('id')}-{db(db.checklists).count() + 1}"
+            checklist_id = db.checklists.insert(
+                sample_event_identifier=sample_event_identifier,
+                latitude=float(data.get("lat", 0)),
+                longitude=float(data.get("lng", 0)),
+                observation_date=current_date,
+                observation_time=current_time,
+                observer_id=auth.current_user.get('email'),
+            )
+            print(f"Checklist inserted with ID: {checklist_id}")
+        except Exception as e:
+            print(f"Error inserting checklist: {e}")
+
+        # Insert sightings associated with the checklist
+        try:
+            sightings = data.get("checklist", [])
+            print("Sightings data received:", sightings)  # Debug: Check if sightings data is received
+
+            for sighting in sightings:
+                print("Processing sighting:", sighting)  # Debug: Print each sighting being processed
+                species = sighting.get("species")
+                count = sighting.get("count", 0)
+
+                # Insert the sighting into the database
+                sighting_id = db.sightings.insert(
+                    sample_event_identifier=sample_event_identifier,
+                    specie_name=species,
+                    observation_count=int(count),  # Ensure count is an integer
+                )
+                print(f"Sighting inserted with ID: {sighting_id}, {species} with count {count}")
+        except Exception as e:
+            print(f"Error inserting sightings: {e}")
     except Exception as e:
         return dict(success=False, message=f"Error saving checklist: {e}")
     
@@ -54,32 +83,37 @@ def submit_checklist():
 def my_checklists():
     user_email = get_user_email()
     logger.info(f"Current user email: {user_email}")
-    rows = db(db.checklists.observer_id == user_email).select().as_list()
-    # logger.info(f"Retrieved checklists: {checklists}")
-    for checklist in rows:
-        # print(checklist['observation_time'], checklist['observation_date'])
-        if not checklist['observation_date']:
-            checklist['observation_date'] = datetime(2024, 12, 4).date()
 
-        if checklist['observation_time'] == checklist['observation_date'].strftime("%Y-%m-%d"):
-            checklist['observation_time'] = "00:00:00"  # Default time if invalid
-        # print(checklist['observation_time'], checklist['observation_date'])
-    serialized_rows = json.dumps(rows, default=str)
-    # print(serialized_rows)
-    return dict(checklists=serialized_rows)
-    # user_email = get_user_email()
-    # logger.info(f"Current user email: {user_email}")
+    # Fetch checklists for the logged-in user
+    checklists = db(db.checklists.observer_id == user_email).select().as_list()
 
-    # rows = db(db.checklists.observer_id == user_email).select()
-    # valid_checklists = []
-    # for row in rows:
-    #     corrected_date = handle_partial_date(row["observation_date"])
-    #             # Update only if the corrected date is different
-    #     if corrected_date.strftime("%Y-%m-%d") != row["observation_date"]:
-    #         db(db.checklists.id == row["id"]).update(observation_date=corrected_date.strftime("%Y-%m-%d"))
-    #         logger.info(f"Row ID {row['id']} updated with corrected date {corrected_date}")
-    #     valid_checklists.append(row.as_dict())
-    # return dict(checklists=valid_checklists)
+    # For each checklist, fetch associated sightings
+    for checklist in checklists:
+        checklist["sightings"] = db(
+            db.sightings.sample_event_identifier == checklist["sample_event_identifier"]
+        ).select(db.sightings.ALL).as_list()
+        # sample_event_id = checklist["sample_event_identifier"]
+        # sightings = db(db.sightings.sample_event_identifier == sample_event_id).select(
+        #     db.sightings.specie_name,
+        #     db.sightings.observation_count,
+        # ).as_list()
+        # checklist["sightings"] = sightings  # Add sightings to each checklist
+
+    serialized_checklists = json.dumps(checklists, default=str)
+    return dict(checklists=serialized_checklists)
+    # rows = db(db.checklists.observer_id == user_email).select().as_list()
+    # # logger.info(f"Retrieved checklists: {checklists}")
+    # for checklist in rows:
+    #     # print(checklist['observation_time'], checklist['observation_date'])
+    #     if not checklist['observation_date']:
+    #         checklist['observation_date'] = datetime(2024, 12, 4).date()
+
+    #     if checklist['observation_time'] == checklist['observation_date'].strftime("%Y-%m-%d"):
+    #         checklist['observation_time'] = "00:00:00"  # Default time if invalid
+    #     # print(checklist['observation_time'], checklist['observation_date'])
+    # serialized_rows = json.dumps(rows, default=str)
+    # # print(serialized_rows)
+    # return dict(checklists=serialized_rows)
 
 @action("delete_checklist/<checklist_id:int>", method=["DELETE"])
 @action.uses(db, auth)

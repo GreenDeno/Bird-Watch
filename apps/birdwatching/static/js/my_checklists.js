@@ -1,34 +1,42 @@
 "use strict";
 
-// document.querySelectorAll('.delete-button').forEach(button => {
-//     button.addEventListener('click', (event) => {
-//         const id = button.getAttribute('data-id');
-//         deleteChecklist(id);
-//     });
-// });
-
-let app = {
-    data: {
-        data: function () {
-            return {
-                checklists: Pchecklists, // Parse the JSON string passed from backend
-            };
+const app = {
+    data() {
+        return {
+            checklists: Pchecklists, // Parse the JSON string passed from backend
+        };
+    },
+    methods: {
+        enableEdit(sighting) {
+            // Enable editing for the row
+            sighting.isEditing = true;
+            sighting.newDate = sighting.observation_date;
+            sighting.newCount = sighting.observation_count;
         },
-        methods: {
-            deleteChecklist: function (id) {
-                axios.delete(`/birdwatching/delete_checklist/${id}`).then(() => {
-                    this.checklists = this.checklists.filter(c => c.id !== id);
-                }).catch(error => {
-                    console.error("Failed to delete checklist:", error);
-                });
-            },
-            editChecklist: function (id) {
-                window.location.href = `/birdwatching/edit_checklist/${id}`;
-            },
+        saveEdit(sighting, checklist) {
+            // Save the updated data
+            axios.post(`/birdwatching/edit_checklist/${checklist.id}`, {
+                observation_date: sighting.newDate,
+                observation_count: sighting.newCount,
+            }).then(() => {
+                sighting.isEditing = false;
+                sighting.observation_date = sighting.newDate;
+                sighting.observation_count = sighting.newCount;
+                alert("Changes saved successfully!");
+            }).catch((error) => {
+                console.error("Failed to save changes:", error);
+                alert("Error saving changes.");
+            });
+        },
+        deleteChecklist(id) {
+            axios.delete(`/birdwatching/delete_checklist/${id}`).then(() => {
+                this.checklists = this.checklists.filter((c) => c.id !== id);
+            }).catch((error) => {
+                console.error("Failed to delete checklist:", error);
+            });
         },
     },
 };
 
-// console.log("Checklists received from backend:", JSON.parse(checklists)); // Add this line to debug
-
-app.vue = Vue.createApp(app.data).mount("#app");
+// Mount the Vue app
+Vue.createApp(app).mount("#app");

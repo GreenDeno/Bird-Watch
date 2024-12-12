@@ -36,7 +36,7 @@ app.data = {
             this.checklist.splice(index, 1);
         },
         submitChecklist: function () {
-            console.log("Submitting checklist:", {
+            console.log("Submitted checklist:", {
                 checklist: this.checklist,
                 lat: this.lat,
                 lng: this.lng,
