@@ -263,14 +263,6 @@ app.load_data = function () {
 
         app.vue.create_sighting_chart();
         app.vue.update_displayed_species();
-
-        // for (let species of app.vue.species_sightings) {
-        //     console.log(species.name, species.total_count, species.first_date, species.last_date, species.positions);
-        // }
-
-        // for (let sighting of app.vue.activity_sightings) {
-        //     console.log(sighting.date, sighting.count);
-        // }
     })
 }
 

@@ -17,6 +17,32 @@ def get_user_email():
 def get_time():
     return datetime.utcnow()
 
+def handle_partial_date(input_date):
+    try:
+        # If the input is None, return None
+        if input_date is None:
+            return None
+        # If the input is already a datetime.date object, return it as is.
+        if isinstance(input_date, date):
+            return input_date
+        # Ensure input is a string before processing.
+        input_date = str(input_date)
+        # Case: Full date in the format YYYY-MM-DD
+        if len(input_date) == 10 and '-' in input_date:
+            return datetime.strptime(input_date, "%Y-%m-%d").date()
+        # Case: Partial date with only year and month, e.g., "2024-12-"
+        elif len(input_date) == 7 and '-' in input_date:
+            input_date = f"{input_date}-01"  # Default to the first day of the month
+            return datetime.strptime(input_date, "%Y-%m-%d").date()
+        # Case: Only year provided, e.g., "2024"
+        elif len(input_date) == 4 and input_date.isdigit():
+            input_date = f"{input_date}-01-01"  # Default to January 1st
+            return datetime.strptime(input_date, "%Y-%m-%d").date()
+        else:
+            raise ValueError(f"Invalid date format: {input_date}")
+    except ValueError as e:
+        print(f"Error parsing date: {e}")
+        return None
 
 # Store the total different species of birds
 db.define_table('species',
@@ -53,110 +79,5 @@ db.define_table('checklists',
 
     Field('observer_id', 'string')
 )
-    
-# Populate sample data for testing if databases are empty
-# if db(db.species).isempty():
-#     with open(os.path.join(current_dir, "samples", "species.csv"), 'r') as f:
-#         reader = csv.reader(f)
-#         next(reader) # skip header
-#         for row in reader:
-#             db.species.insert(name=row[0])
-
-def handle_partial_date(input_date):
-    try:
-        # If the input is None, return None
-        if input_date is None:
-            return None
-        # If the input is already a datetime.date object, return it as is.
-        if isinstance(input_date, date):
-            return input_date
-        # Ensure input is a string before processing.
-        input_date = str(input_date)
-        # Case: Full date in the format YYYY-MM-DD
-        if len(input_date) == 10 and '-' in input_date:
-            return datetime.strptime(input_date, "%Y-%m-%d").date()
-        # Case: Partial date with only year and month, e.g., "2024-12-"
-        elif len(input_date) == 7 and '-' in input_date:
-            input_date = f"{input_date}-01"  # Default to the first day of the month
-            return datetime.strptime(input_date, "%Y-%m-%d").date()
-        # Case: Only year provided, e.g., "2024"
-        elif len(input_date) == 4 and input_date.isdigit():
-            input_date = f"{input_date}-01-01"  # Default to January 1st
-            return datetime.strptime(input_date, "%Y-%m-%d").date()
-        else:
-            raise ValueError(f"Invalid date format: {input_date}")
-    except ValueError as e:
-        print(f"Error parsing date: {e}")
-        return None
-
-
-# Run the cleanup process
-# rows = db(db.checklists).select()
-# results = db.executesql("SELECT id, observation_date FROM checklists", as_dict=True)
-
-# print(f"ID: {row.id}, Observation Date: {row.observation_date}, Observation Time: {row.observation_time}")
-# for row in results:
-#     try:
-#         corrected_date = handle_partial_date(row['observation_date'])
-#         if corrected_date:
-#             db(db.checklists.id == row["id"]).update(observation_date=corrected_date)
-#         else:
-#             print(f"Invalid date: {row.observation_date}, skipping correction.")
-#     except ValueError as e:
-#         print(f"Error correcting date for row {row.id}: {e}")
-
-# db.commit()
-# print("Date correction complete.")
-
-# if db(db.checklists).isempty():
-#     with open(os.path.join(current_dir, "samples", "checklists.csv"), 'r') as f:
-#         reader = csv.reader(f)
-#         next(reader) # skip header
-#         for row in reader:
-#             try:
-#                 observation_date = handle_partial_date(row[3])
-#                 if observation_date is None:
-#                     print(f"Skipping row due to invalid date: {row}")
-#                     continue  # Skip rows with invalid dates
-                
-#                 db.checklists.insert(
-#                 sample_event_identifier=row[0],
-#                 latitude=row[1],
-#                 longitude=row[2],
-#                 observation_date=observation_date,
-#                 # observation_date=row[3],
-#                 observation_time=row[4],
-#                 # observation_duration=row[6],
-#                 observation_duration=observation_duration,
-#                 observer_id=row[5],
-#             )
-#             except ValueError as e:
-#                 print(f"Date parsing error: {e} in row {row}")
-#                 continue  # Skip invalid rows
-#             if row[6]:
-#                 observation_duration = int(float(row[6]))
-#             else:
-#                 observation_duration = 0
-            # try:
-            #     observation_date = handle_partial_date(row[3])  # Validate and correct the date
-            # except ValueError:
-            #     observation_date = None 
-
-
-# if db(db.sightings).isempty():
-#     with open(os.path.join(current_dir, "samples", "sightings.csv"), 'r') as f:
-#         reader = csv.reader(f)
-#         next(reader) # skip header
-#         for row in reader:
-#             if row[2] and row[2] != "X":
-#                 observation_count = int(float(row[2]))
-#             else:
-#                 observation_count = 0
-
-#             db.sightings.insert(
-#                 sample_event_identifier=row[0],
-#                 specie_name=row[1],
-#                 observation_count=observation_count,
-#             )
 
 db.commit()
