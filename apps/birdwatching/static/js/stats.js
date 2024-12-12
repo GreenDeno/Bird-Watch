@@ -5,19 +5,6 @@ function process_sightings_dataset(sightings) {
         return [];
     }
 
-    // If there is only one point, pad the data
-    if (sightings.length == 1) {
-        const sighting = sightings[0];
-
-        const new_date = new Date(sighting.date)
-        new_date.setDate(new_date.getDate() + 1);
-
-        sightings.push({
-            date: new_date.toISOString().split('T')[0],
-            count: 0,
-        });
-    }
-
     // Count sightings per date
     const sighting_counts = sightings.reduce((acc, sighting) => {
         const date = sighting.date.split('T')[0]; // Handle ISO date strings
@@ -269,21 +256,13 @@ app.vue = Vue.createApp(app.data).mount("#app");
 
 app.load_data = function () {
     axios.get(get_sightings_url).then(function(response) {
-        let sightings = response.data;
+        let sightings = response.data.sightings;
 
         app.vue.activity_sightings = process_sightings_dataset(sightings);
         app.vue.species_sightings = process_species_dataset(sightings);
 
         app.vue.create_sighting_chart();
         app.vue.update_displayed_species();
-
-        // for (let species of app.vue.species_sightings) {
-        //     console.log(species.name, species.total_count, species.first_date, species.last_date, species.positions);
-        // }
-
-        // for (let sighting of app.vue.activity_sightings) {
-        //     console.log(sighting.date, sighting.count);
-        // }
     })
 }
 
