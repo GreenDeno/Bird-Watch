@@ -157,14 +157,14 @@ def my_checklists():
         })
 
     # Prepare the final grouped data
-    # final_data = [
-    #     {"date": str(date), "sightings": sightings}
-    #     for date, sightings in grouped_checklists.items()
-    # ]
     final_data = [
-    {"date": str(date) if date else "Unknown Date", "sightings": sightings}
-    for date, sightings in grouped_checklists.items()
-]
+        {"date": str(date), "sightings": sightings}
+        for date, sightings in grouped_checklists.items()
+    ]
+    # final_data = [
+    # {"date": str(date) if date else "Unknown Date", "sightings": sightings}
+    # for date, sightings in grouped_checklists.items()
+# ]
 
     # Return the data as JSON to the frontend
     return dict(checklists=json.dumps(final_data, default=str))
@@ -216,24 +216,48 @@ def delete_checklist(checklist_id):
 @action.uses("edit_checklist.html", db, auth)
 def edit_checklist(checklist_id):
     user_email = get_user_email()
-    checklist = db((db.checklists.id == checklist_id) & (db.checklists.observer_id == user_email)).select().first()
+    
+    # Retrieve the checklist belonging to the logged-in user
+    checklist = db(
+        (db.checklists.id == checklist_id) & (db.checklists.observer_id == user_email)
+    ).select().first()
+    
     if not checklist:
         abort(404)
+
     if request.method == "POST":
         data = request.json or request.POST
-        # Update the checklist with the provided data
+        # Update the checklist details if provided
         db(
             (db.checklists.id == checklist_id) & (db.checklists.observer_id == user_email)
         ).update(
-            sample_event_identifier=data.get("sample_event_identifier"),
-            latitude=data.get("latitude"),
-            longitude=data.get("longitude"),
-            observation_date=data.get("observation_date"),
-            observation_time=data.get("observation_time"),
-            observation_duration=data.get("observation_duration"),
+            latitude=data.get("latitude", checklist.latitude),
+            longitude=data.get("longitude", checklist.longitude),
+            observation_date=data.get("observation_date", checklist.observation_date),
+            observation_time=data.get("observation_time", checklist.observation_time),
         )
-        return dict(success=True, message="Checklist updated successfully.")
-    return dict(checklist=checklist)
+        
+        # Update the associated sightings based on the checklist
+        sightings = data.get("sightings", [])
+        for sighting in sightings:
+            db(
+                (db.sightings.id == sighting["id"]) &
+                (db.sightings.sample_event_identifier == checklist.sample_event_identifier)
+            ).update(
+                observation_count=sighting.get("observation_count")
+            )
+        
+        return dict(success=True, message="Checklist and sightings updated successfully.")
+
+    # Return the checklist data with associated sightings for frontend editing
+    sightings = db(
+        db.sightings.sample_event_identifier == checklist.sample_event_identifier
+    ).select()
+    
+    return dict(
+        checklist=checklist,
+        sightings=sightings.as_list(),
+    )
 
 @action("api/get_my_checklists", method=["GET"])
 @action.uses(db, auth)
@@ -246,21 +270,18 @@ def get_my_checklists():
 @action.uses(db, auth)
 def edit_sighting(sighting_id):
     data = request.json
-    new_count = data.get("observation_count")
-    new_date = data.get("observation_date")  # This should be passed from the frontend
+    print(f"Received data for sighting_id {sighting_id}: {data}")  # Debug
 
-    # Ensure the date and count are valid
-    if not new_date or not new_count:
+    # Check if observation_count is provided and is valid
+    new_count = data.get("observation_count")
+    if new_count is None or not isinstance(new_count, int):
+        print("Invalid observation_count received.")  # Debug
         return dict(success=False, message="Invalid data provided.")
 
-    try:
-        db(db.sightings.id == sighting_id).update(
-            observation_count=int(new_count),
-            observation_date=new_date  # Make sure the date is passed correctly
-        )
-        return dict(success=True, message="Sighting updated successfully.")
-    except Exception as e:
-        return dict(success=False, message=f"Error updating sighting: {e}")
+    # Update the sighting record
+    db(db.sightings.id == sighting_id).update(observation_count=new_count)
+    print(f"Sighting {sighting_id} updated with count {new_count}.")  # Debug
+    return dict(success=True, message="Sighting updated successfully.")
 
 @action("delete_sighting/<sighting_id:int>", method=["DELETE"])
 @action.uses(db, auth)

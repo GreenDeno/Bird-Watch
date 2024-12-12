@@ -13,12 +13,13 @@ const app = {
             sighting.newCount = sighting.observation_count;
         },
         saveEdit(sighting) {
+            console.log("Saving sighting:", sighting); // Debug to check the current sighting object
             axios.post(`/birdwatching/edit_sighting/${sighting.id}`, {
-                observation_date: sighting.observation_date, // Ensure this is correct
-                observation_count: sighting.newCount, // Pass the new count
-            }).then(() => {
-                sighting.isEditing = false;
-                sighting.observation_count = sighting.newCount;
+                observation_count: sighting.newCount, // Pass the new count value
+            }).then((response) => {
+                console.log("Save response:", response.data); // Debug to confirm backend response
+                sighting.isEditing = false; // Exit editing mode
+                sighting.observation_count = sighting.newCount; // Update UI with the new count
                 alert("Changes saved successfully!");
             }).catch((error) => {
                 console.error("Failed to save changes:", error);
@@ -42,6 +43,13 @@ const app = {
         },
         
     },
+    // mounted() {
+    //     axios.get("/birdwatching/my_checklists").then((response) => {
+    //         this.checklists = response.data.checklists;
+    //     }).catch((error) => {
+    //         console.error("Failed to load checklists:", error);
+    //     });
+    // },
 };
 // console.log(Pchecklists);
 
