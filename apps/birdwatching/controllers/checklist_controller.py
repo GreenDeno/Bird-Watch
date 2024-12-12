@@ -5,6 +5,7 @@ from datetime import datetime, date, time
 from ..common import db, session, T, cache, auth, logger, authenticated, unauthenticated, flash
 from ..models import get_user_email, handle_partial_date
 import json
+import html
 url_signer = URLSigner(session)
 
 @action("checklist")
@@ -30,53 +31,103 @@ def validate_date(date_string):
 @action.uses(db, auth)
 def submit_checklist():
     data = request.json
-    
-    # checklist_date = data.get("observation_date")
-
-    # observation_date = handle_partial_date(checklist_date)
-    # if observation_date is None:
-    #     return dict(success=False, message="Invalid date format.")
+    user_email = get_user_email()
 
     try:
         print("Data received from frontend:", data)
-        try:
-            current_date = datetime.now().date()
-            current_time = datetime.now().time()
-            # Insert into the checklists table
-            sample_event_identifier = f"event-{auth.current_user.get('id')}-{db(db.checklists).count() + 1}"
+        current_date = datetime.now().date()
+
+        # Find or create a checklist for today
+        sample_event_identifier = f"event-{auth.current_user.get('id')}-{db(db.checklists).count() + 1}"
+        checklist = db(
+            (db.checklists.observer_id == user_email) & 
+            (db.checklists.observation_date == current_date)
+        ).select().first()
+
+        if not checklist:
             checklist_id = db.checklists.insert(
                 sample_event_identifier=sample_event_identifier,
                 latitude=float(data.get("lat", 0)),
                 longitude=float(data.get("lng", 0)),
                 observation_date=current_date,
-                observation_time=current_time,
-                observer_id=auth.current_user.get('email'),
+                observation_time=datetime.now().time(),
+                observer_id=user_email,
             )
-            print(f"Checklist inserted with ID: {checklist_id}")
-        except Exception as e:
-            print(f"Error inserting checklist: {e}")
+            checklist = db.checklists[checklist_id]
+            print(f"Checklist created with ID: {checklist_id}")
+        else:
+            print(f"Checklist for today already exists with ID: {checklist.id}")
 
-        # Insert sightings associated with the checklist
-        try:
-            sightings = data.get("checklist", [])
-            print("Sightings data received:", sightings)  # Debug: Check if sightings data is received
+        # Insert or update sightings
+        sightings = data.get("checklist", [])
+        for sighting in sightings:
+            species = sighting.get("species")
+            count = int(sighting.get("count", 0))
 
-            for sighting in sightings:
-                print("Processing sighting:", sighting)  # Debug: Print each sighting being processed
-                species = sighting.get("species")
-                count = sighting.get("count", 0)
+            existing_sighting = db(
+                (db.sightings.specie_name == species) &
+                (db.sightings.sample_event_identifier == checklist.sample_event_identifier)
+            ).select().first()
 
-                # Insert the sighting into the database
-                sighting_id = db.sightings.insert(
-                    sample_event_identifier=sample_event_identifier,
-                    specie_name=species,
-                    observation_count=int(count),  # Ensure count is an integer
+            if existing_sighting:
+                # Update the existing sighting
+                existing_sighting.update_record(
+                    observation_count=existing_sighting.observation_count + count
                 )
-                print(f"Sighting inserted with ID: {sighting_id}, {species} with count {count}")
-        except Exception as e:
-            print(f"Error inserting sightings: {e}")
+                print(f"Updated sighting for species {species} with new count {existing_sighting.observation_count}")
+            else:
+                # Insert a new sighting
+                db.sightings.insert(
+                    sample_event_identifier=checklist.sample_event_identifier,
+                    specie_name=species,
+                    observation_count=count,
+                )
+                print(f"New sighting inserted for species {species} with count {count}")
+
+        return dict(success=True, message="Checklist submitted successfully.")
     except Exception as e:
         return dict(success=False, message=f"Error saving checklist: {e}")
+
+    # try:
+    #     print("Data received from frontend:", data)
+    #     try:
+    #         current_date = datetime.now().date()
+    #         current_time = datetime.now().time()
+    #         # Insert into the checklists table
+    #         sample_event_identifier = f"event-{auth.current_user.get('id')}-{db(db.checklists).count() + 1}"
+    #         checklist_id = db.checklists.insert(
+    #             sample_event_identifier=sample_event_identifier,
+    #             latitude=float(data.get("lat", 0)),
+    #             longitude=float(data.get("lng", 0)),
+    #             observation_date=current_date,
+    #             observation_time=current_time,
+    #             observer_id=auth.current_user.get('email'),
+    #         )
+    #         print(f"Checklist inserted with ID: {checklist_id}")
+    #     except Exception as e:
+    #         print(f"Error inserting checklist: {e}")
+
+    #     # Insert sightings associated with the checklist
+    #     try:
+    #         sightings = data.get("checklist", [])
+    #         print("Sightings data received:", sightings)  # Debug: Check if sightings data is received
+
+    #         for sighting in sightings:
+    #             print("Processing sighting:", sighting)  # Debug: Print each sighting being processed
+    #             species = sighting.get("species")
+    #             count = sighting.get("count", 0)
+
+    #             # Insert the sighting into the database
+    #             sighting_id = db.sightings.insert(
+    #                 sample_event_identifier=sample_event_identifier,
+    #                 specie_name=species,
+    #                 observation_count=int(count),  # Ensure count is an integer
+    #             )
+    #             print(f"Sighting inserted with ID: {sighting_id}, {species} with count {count}")
+    #     except Exception as e:
+    #         print(f"Error inserting sightings: {e}")
+    # except Exception as e:
+    #     return dict(success=False, message=f"Error saving checklist: {e}")
     
 @action("my_checklists")
 @action.uses("my_checklists.html", db, auth)
@@ -84,43 +135,69 @@ def my_checklists():
     user_email = get_user_email()
     rows = db(
         (db.checklists.observer_id == user_email) &
-        (db.sightings.sample_event_identifier == db.checklists.sample_event_identifier)
+        (db.sightings.sample_event_identifier == db.checklists.sample_event_identifier) &
+        (db.checklists.observation_date != None)
     ).select(
         db.checklists.ALL,
         db.sightings.ALL,
-        distinct=True
+        orderby=db.checklists.observation_date
     )
-    
-    # Group sightings under each checklist
-    checklists = {}
+
+    # Group checklists by date
+    grouped_checklists = {}
     for row in rows:
-        checklist_id = row.checklists.id
-        if checklist_id not in checklists:
-            checklists[checklist_id] = {
-                "id": checklist_id,
-                "observation_date": row.checklists.observation_date,
-                "sightings": []
-            }
-        checklists[checklist_id]["sightings"].append({
+        date = row.checklists.observation_date
+        if date not in grouped_checklists:
+            grouped_checklists[date] = []
+
+        grouped_checklists[date].append({
             "id": row.sightings.id,
             "specie_name": row.sightings.specie_name,
-            "observation_count": row.sightings.observation_count
+            "observation_count": row.sightings.observation_count,
         })
-    
-    return dict(checklists=json.dumps(list(checklists.values()), default=str))
-    # rows = db(db.checklists.observer_id == user_email).select().as_list()
-    # # logger.info(f"Retrieved checklists: {checklists}")
-    # for checklist in rows:
-    #     # print(checklist['observation_time'], checklist['observation_date'])
-    #     if not checklist['observation_date']:
-    #         checklist['observation_date'] = datetime(2024, 12, 4).date()
 
-    #     if checklist['observation_time'] == checklist['observation_date'].strftime("%Y-%m-%d"):
-    #         checklist['observation_time'] = "00:00:00"  # Default time if invalid
-    #     # print(checklist['observation_time'], checklist['observation_date'])
-    # serialized_rows = json.dumps(rows, default=str)
-    # # print(serialized_rows)
-    # return dict(checklists=serialized_rows)
+    # Prepare the final grouped data
+    # final_data = [
+    #     {"date": str(date), "sightings": sightings}
+    #     for date, sightings in grouped_checklists.items()
+    # ]
+    final_data = [
+    {"date": str(date) if date else "Unknown Date", "sightings": sightings}
+    for date, sightings in grouped_checklists.items()
+]
+
+    # Return the data as JSON to the frontend
+    return dict(checklists=json.dumps(final_data, default=str))
+    # rows = db(
+    #     (db.checklists.observer_id == user_email) &
+    #     (db.sightings.sample_event_identifier == db.checklists.sample_event_identifier)
+    # ).select(
+    #     db.checklists.ALL,
+    #     db.sightings.ALL,
+    #     orderby=db.checklists.observation_date
+    # )
+
+    # # Group checklists by date
+    # grouped_checklists = {}
+    # for row in rows:
+    #     date = row.checklists.observation_date
+    #     if date not in grouped_checklists:
+    #         grouped_checklists[date] = []
+
+    #     grouped_checklists[date].append({
+    #         "id": row.sightings.id,
+    #         "specie_name": row.sightings.specie_name,
+    #         "observation_count": row.sightings.observation_count,
+    #     })
+
+    # # Prepare the final grouped data
+    # final_data = [
+    #     {"date": str(date), "sightings": sightings}
+    #     for date, sightings in grouped_checklists.items()
+    # ]
+
+    # # Return the data as JSON to the frontend
+    # return dict(checklists=json.dumps(final_data, default=str))
 
 @action("delete_checklist/<checklist_id:int>", method=["DELETE"])
 @action.uses(db, auth)
@@ -164,4 +241,61 @@ def get_my_checklists():
     user_email = get_user_email()
     checklists = db(db.checklists.observer_id == user_email).select().as_list()
     return dict(checklists=checklists)
+
+@action("edit_sighting/<sighting_id:int>", method=["POST"])
+@action.uses(db, auth)
+def edit_sighting(sighting_id):
+    data = request.json
+    new_count = data.get("observation_count")
+    new_date = data.get("observation_date")  # This should be passed from the frontend
+
+    # Ensure the date and count are valid
+    if not new_date or not new_count:
+        return dict(success=False, message="Invalid data provided.")
+
+    try:
+        db(db.sightings.id == sighting_id).update(
+            observation_count=int(new_count),
+            observation_date=new_date  # Make sure the date is passed correctly
+        )
+        return dict(success=True, message="Sighting updated successfully.")
+    except Exception as e:
+        return dict(success=False, message=f"Error updating sighting: {e}")
+
+@action("delete_sighting/<sighting_id:int>", method=["DELETE"])
+@action.uses(db, auth)
+def delete_sighting(sighting_id):
+    user_email = get_user_email()
+
+    # # Validate that the sighting belongs to the logged-in user
+    # sighting = db((db.sightings.id == sighting_id) &
+    #               (db.sightings.sample_event_identifier == db.checklists.sample_event_identifier) &
+    #               (db.checklists.observer_id == user_email)).select().first()
+
+    # if not sighting:
+    #     return dict(success=False, message="Sighting not found or unauthorized.")
+
+    # # Delete the sighting
+    # deleted_rows = db(db.sightings.id == sighting_id).delete()
+    # if deleted_rows == 0:
+    #     return dict(success=False, message="Failed to delete sighting.")
+    
+    # Retrieve the sighting and its associated checklist
+    sighting = db(db.sightings.id == sighting_id).select().first()
+    if not sighting:
+        print(f"Sighting with ID {sighting_id} not found.")
+        return dict(success=False, message="Sighting not found.")
+
+    # Delete the sighting
+    db(db.sightings.id == sighting_id).delete()
+    print(f"Sighting with ID {sighting_id} not found.")
+
+    # Check if the checklist has any remaining sightings
+    sample_event_identifier = sighting.sample_event_identifier
+    remaining_sightings = db(db.sightings.sample_event_identifier == sample_event_identifier).count()
+
+    # If no sightings remain, delete the checklist
+    if remaining_sightings == 0:
+        db(db.checklists.sample_event_identifier == sample_event_identifier).delete()
+    return dict(success=True, message="Sighting deleted successfully.")
 

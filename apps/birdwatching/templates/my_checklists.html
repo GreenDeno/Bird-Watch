@@ -17,34 +17,44 @@
         <table border="1" style="width: 100%; border-collapse: collapse; text-align: left;">
             <thead>
                 <tr>
-                    <th style="padding: 10px;">Species</th>
                     <th style="padding: 10px;">Date Seen</th>
+                    <th style="padding: 10px;">Species</th>
                     <th style="padding: 10px;">Count</th>
                     <th style="padding: 10px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                <template v-for="(checklist, index) in checklists">
-                    <tr v-for="(sighting, idx) in checklist.sightings" :key="sighting.id">
-                        <td :style="{ 'border-top': idx > 0 ? '1px solid #ddd' : 'none', 'padding': '10px' }">
-                            {{ sighting.specie_name }}
+                <template v-for="(group, index) in checklists" :key="index">
+                    <tr>
+                        <td :rowspan="group.sightings.length" style="padding: 10px; vertical-align: top;">
+                            {{ group.date }}
                         </td>
-                        <td :style="{ 'border-top': idx > 0 ? '1px solid #ddd' : 'none', 'padding': '10px' }">
-                            <span v-if="!sighting.isEditing">{{ checklist.observation_date || "Unknown Date" }}</span>
-                            <input v-else v-model="sighting.newDate" type="date" />
+                        <td style="padding: 10px;">{{ group.sightings[0].specie_name }}</td>
+                        <td style="padding: 10px;">
+                            <span v-if="!group.sightings[0].isEditing">{{ group.sightings[0].observation_count }}</span>
+                            <input v-else v-model="group.sightings[0].newCount" type="number" min="0" />
                         </td>
-                        <td :style="{ 'border-top': idx > 0 ? '1px solid #ddd' : 'none', 'padding': '10px' }">
+                        <td style="padding: 10px;">
+                            <button v-if="!group.sightings[0].isEditing" @click="enableEdit(group.sightings[0])">Edit</button>
+                            <button v-else @click="saveEdit(group.sightings[0])">Save</button>
+                            <button @click="deleteSighting(group.sightings[0].id)">Delete</button>
+                        </td>
+                    </tr>
+                    <tr v-for="(sighting, idx) in group.sightings.slice(1)" :key="sighting.id">
+                        <td style="padding: 10px;">{{ sighting.specie_name }}</td>
+                        <td style="padding: 10px;">
                             <span v-if="!sighting.isEditing">{{ sighting.observation_count }}</span>
                             <input v-else v-model="sighting.newCount" type="number" min="0" />
                         </td>
-                        <td :style="{ 'border-top': idx > 0 ? '1px solid #ddd' : 'none', 'padding': '10px' }">
+                        <td style="padding: 10px;">
                             <button v-if="!sighting.isEditing" @click="enableEdit(sighting)">Edit</button>
-                            <button v-else @click="saveEdit(sighting, checklist)">Save</button>
-                            <button @click="deleteChecklist(checklist.id)">Delete</button>
+                            <button v-else @click="saveEdit(sighting)">Save</button>
+                            <button @click="deleteSighting(sighting.id)">Delete</button>
                         </td>
                     </tr>
                 </template>
             </tbody>
+            
         </table>
     </div>    
     
