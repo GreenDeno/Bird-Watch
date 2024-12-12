@@ -82,25 +82,32 @@ def submit_checklist():
 @action.uses("my_checklists.html", db, auth)
 def my_checklists():
     user_email = get_user_email()
-    logger.info(f"Current user email: {user_email}")
-
-    # Fetch checklists for the logged-in user
-    checklists = db(db.checklists.observer_id == user_email).select().as_list()
-
-    # For each checklist, fetch associated sightings
-    for checklist in checklists:
-        checklist["sightings"] = db(
-            db.sightings.sample_event_identifier == checklist["sample_event_identifier"]
-        ).select(db.sightings.ALL).as_list()
-        # sample_event_id = checklist["sample_event_identifier"]
-        # sightings = db(db.sightings.sample_event_identifier == sample_event_id).select(
-        #     db.sightings.specie_name,
-        #     db.sightings.observation_count,
-        # ).as_list()
-        # checklist["sightings"] = sightings  # Add sightings to each checklist
-
-    serialized_checklists = json.dumps(checklists, default=str)
-    return dict(checklists=serialized_checklists)
+    rows = db(
+        (db.checklists.observer_id == user_email) &
+        (db.sightings.sample_event_identifier == db.checklists.sample_event_identifier)
+    ).select(
+        db.checklists.ALL,
+        db.sightings.ALL,
+        distinct=True
+    )
+    
+    # Group sightings under each checklist
+    checklists = {}
+    for row in rows:
+        checklist_id = row.checklists.id
+        if checklist_id not in checklists:
+            checklists[checklist_id] = {
+                "id": checklist_id,
+                "observation_date": row.checklists.observation_date,
+                "sightings": []
+            }
+        checklists[checklist_id]["sightings"].append({
+            "id": row.sightings.id,
+            "specie_name": row.sightings.specie_name,
+            "observation_count": row.sightings.observation_count
+        })
+    
+    return dict(checklists=json.dumps(list(checklists.values()), default=str))
     # rows = db(db.checklists.observer_id == user_email).select().as_list()
     # # logger.info(f"Retrieved checklists: {checklists}")
     # for checklist in rows:
