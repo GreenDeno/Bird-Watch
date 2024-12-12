@@ -20,21 +20,23 @@ def get_user_sightings():
     user_email = get_user_email()
 
     checklists = db(db.checklists.observer_id == user_email).select()
-    sightings = []
+    total_sightings = []
     
     for checklist in checklists:
-        sighting = db(db.sightings.sample_event_identifier == checklist.sample_event_identifier).select().first()
+        sightings = db(db.sightings.sample_event_identifier == checklist.sample_event_identifier).select()
 
-        name = sighting.specie_name
-        count = sighting.observation_count
-        position = [checklist.latitude, checklist.longitude]
-        date = checklist.observation_date
+        for sighting in sightings:
+            name = sighting.specie_name
+            count = sighting.observation_count
+            position = [checklist.latitude, checklist.longitude]
+            date = checklist.observation_date
 
-        sightings.append({
-            'name': name,
-            'count': count,
-            'position': position,
-            'date': date
-        })
+            if count > 0:
+                total_sightings.append({
+                    'name': name,
+                    'count': count,
+                    'position': position,
+                    'date': date
+                })
 
-    return dict(sightings=sightings)
+    return dict(sightings=total_sightings)
