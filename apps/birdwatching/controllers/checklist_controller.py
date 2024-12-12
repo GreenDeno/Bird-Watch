@@ -5,6 +5,7 @@ from datetime import datetime, date, time
 from ..common import db, session, T, cache, auth, logger, authenticated, unauthenticated, flash
 from ..models import get_user_email, handle_partial_date
 import json
+import html
 url_signer = URLSigner(session)
 
 @action("checklist")
@@ -88,26 +89,30 @@ def my_checklists():
     ).select(
         db.checklists.ALL,
         db.sightings.ALL,
-        distinct=True
+        orderby=db.checklists.observation_date
     )
-    
-    # Group sightings under each checklist
-    checklists = {}
+
+    # Group checklists by date
+    grouped_checklists = {}
     for row in rows:
-        checklist_id = row.checklists.id
-        if checklist_id not in checklists:
-            checklists[checklist_id] = {
-                "id": checklist_id,
-                "observation_date": row.checklists.observation_date,
-                "sightings": []
-            }
-        checklists[checklist_id]["sightings"].append({
+        date = row.checklists.observation_date
+        if date not in grouped_checklists:
+            grouped_checklists[date] = []
+
+        grouped_checklists[date].append({
             "id": row.sightings.id,
             "specie_name": row.sightings.specie_name,
-            "observation_count": row.sightings.observation_count
+            "observation_count": row.sightings.observation_count,
         })
-    
-    return dict(checklists=json.dumps(list(checklists.values()), default=str))
+
+    # Prepare the final grouped data
+    final_data = [
+        {"date": str(date), "sightings": sightings}
+        for date, sightings in grouped_checklists.items()
+    ]
+
+    # Return the data as JSON to the frontend
+    return dict(checklists=json.dumps(final_data, default=str))
     # rows = db(db.checklists.observer_id == user_email).select().as_list()
     # # logger.info(f"Retrieved checklists: {checklists}")
     # for checklist in rows:
@@ -164,4 +169,61 @@ def get_my_checklists():
     user_email = get_user_email()
     checklists = db(db.checklists.observer_id == user_email).select().as_list()
     return dict(checklists=checklists)
+
+@action("edit_sighting/<sighting_id:int>", method=["POST"])
+@action.uses(db, auth)
+def edit_sighting(sighting_id):
+    user_email = get_user_email()
+    data = request.json
+
+    new_date = data.get("observation_date")
+    new_count = data.get("observation_count")
+
+    logger.info(f"Attempting to edit sighting with ID: {sighting_id} for user: {user_email}")
+    logger.info(f"New data received: date={new_date}, count={new_count}")
+
+    # Validate that the sighting belongs to the logged-in user
+    sighting = db((db.sightings.id == sighting_id) &
+                  (db.sightings.sample_event_identifier == db.checklists.sample_event_identifier) &
+                  (db.checklists.observer_id == user_email)).select().first()
+
+    if not sighting:
+        logger.warning(f"Sighting not found or unauthorized for ID: {sighting_id}")
+        return dict(success=False, message="Sighting not found or unauthorized.")
+
+    # Update the sighting
+    try:
+        db(db.sightings.id == sighting_id).update(
+            observation_count=new_count
+        )
+        # Optionally update the date in the checklist (if needed)
+        db(db.checklists.sample_event_identifier == sighting.sightings.sample_event_identifier).update(
+            observation_date=new_date
+        )
+        logger.info(f"Sighting with ID: {sighting_id} updated successfully.")
+        return dict(success=True, message="Sighting updated successfully.")
+    except Exception as e:
+        logger.error(f"Failed to update sighting: {e}")
+        return dict(success=False, message=f"Error updating sighting: {e}")
+
+@action("delete_sighting/<sighting_id:int>", method=["DELETE"])
+@action.uses(db, auth)
+
+def delete_sighting(sighting_id):
+    user_email = get_user_email()
+
+    # Validate that the sighting belongs to the logged-in user
+    sighting = db((db.sightings.id == sighting_id) &
+                  (db.sightings.sample_event_identifier == db.checklists.sample_event_identifier) &
+                  (db.checklists.observer_id == user_email)).select().first()
+
+    if not sighting:
+        return dict(success=False, message="Sighting not found or unauthorized.")
+
+    # Delete the sighting
+    deleted_rows = db(db.sightings.id == sighting_id).delete()
+    if deleted_rows == 0:
+        return dict(success=False, message="Failed to delete sighting.")
+
+    return dict(success=True, message="Sighting deleted successfully.")
 

@@ -10,31 +10,41 @@ const app = {
         enableEdit(sighting) {
             // Enable editing for the row
             sighting.isEditing = true;
-            sighting.newDate = sighting.observation_date;
             sighting.newCount = sighting.observation_count;
         },
-        saveEdit(sighting, checklist) {
-            // Save the updated data
-            axios.post(`/birdwatching/edit_checklist/${checklist.id}`, {
-                observation_date: sighting.newDate,
-                observation_count: sighting.newCount,
-            }).then(() => {
-                sighting.isEditing = false;
-                sighting.observation_date = sighting.newDate;
-                sighting.observation_count = sighting.newCount;
-                alert("Changes saved successfully!");
-            }).catch((error) => {
-                console.error("Failed to save changes:", error);
-                alert("Error saving changes.");
-            });
+        saveEdit(sighting) {
+            // Save the updated count to the backend
+            axios
+                .post(`/birdwatching/edit_sighting/${sighting.id}`, {
+                    observation_count: sighting.newCount,
+                })
+                .then(() => {
+                    // Update the UI with the new count
+                    sighting.isEditing = false;
+                    sighting.observation_count = sighting.newCount;
+                    alert("Count updated successfully!");
+                })
+                .catch((error) => {
+                    console.error("Failed to save changes:", error);
+                    alert("Error saving changes.");
+                });
         },
-        deleteChecklist(id) {
-            axios.delete(`/birdwatching/delete_checklist/${id}`).then(() => {
-                this.checklists = this.checklists.filter((c) => c.id !== id);
-            }).catch((error) => {
-                console.error("Failed to delete checklist:", error);
-            });
+        deleteSighting(id) {
+            axios
+                .delete(`/birdwatching/delete_sighting/${id}`)
+                .then(() => {
+                    // Remove the deleted sighting from the UI
+                    this.checklists = this.checklists.map(group => ({
+                        date: group.date,
+                        sightings: group.sightings.filter(s => s.id !== id),
+                    })).filter(group => group.sightings.length > 0);
+                })
+                .catch((error) => {
+                    console.error("Error deleting sighting:", error);
+                    alert("Failed to delete sighting.");
+                });
         },
+        
     },
 };
 
