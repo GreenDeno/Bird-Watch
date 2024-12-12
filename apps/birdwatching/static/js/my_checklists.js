@@ -13,21 +13,17 @@ const app = {
             sighting.newCount = sighting.observation_count;
         },
         saveEdit(sighting) {
-            // Save the updated count to the backend
-            axios
-                .post(`/birdwatching/edit_sighting/${sighting.id}`, {
-                    observation_count: sighting.newCount,
-                })
-                .then(() => {
-                    // Update the UI with the new count
-                    sighting.isEditing = false;
-                    sighting.observation_count = sighting.newCount;
-                    alert("Count updated successfully!");
-                })
-                .catch((error) => {
-                    console.error("Failed to save changes:", error);
-                    alert("Error saving changes.");
-                });
+            axios.post(`/birdwatching/edit_sighting/${sighting.id}`, {
+                observation_date: sighting.observation_date, // Ensure this is correct
+                observation_count: sighting.newCount, // Pass the new count
+            }).then(() => {
+                sighting.isEditing = false;
+                sighting.observation_count = sighting.newCount;
+                alert("Changes saved successfully!");
+            }).catch((error) => {
+                console.error("Failed to save changes:", error);
+                alert("Error saving changes.");
+            });
         },
         deleteSighting(id) {
             axios
@@ -47,6 +43,7 @@ const app = {
         
     },
 };
+// console.log(Pchecklists);
 
 // Mount the Vue app
 Vue.createApp(app).mount("#app");
