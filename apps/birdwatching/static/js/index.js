@@ -310,6 +310,32 @@ app.data = {
             }
             this.updateHeatmap();
         },
+
+        updateLocationLink: function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+
+                        // Construct the new link with lat and lng query parameters
+                        const link = '/birdwatching/checklist?lat=' + lat + '&lng=' + lng;
+
+                        // Update the href of the <a> link with the new URL
+                        const locationLink = document.getElementById('location-link');
+                        if (locationLink) {
+                            locationLink.href = link;
+                        }
+                    },
+                    (error) => {
+                        console.error('Error getting location', error);
+                        alert('Could not retrieve your location');
+                    }
+                );
+            } else {
+                alert('Geolocation is not supported by this browser.');
+            }
+        },
         
     
     },
@@ -318,6 +344,7 @@ app.data = {
         this.$nextTick(() => {
             this.init();
             this.locateUser();
+            this.updateLocationLink();
         });
     }
     
