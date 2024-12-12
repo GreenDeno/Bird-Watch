@@ -50,6 +50,8 @@ Users should be able to see their own statistics.  This page should show things 
 - A list of all species they have seen, searchable.  When they click on a species, they should see some visualization of when they saw it, and if one liked, even where (you can include a map here). 
 - Some visualization of how their bird-watching has trended in time. 
 
+Andy worked on My Birding / Stats page, which involves stats.html, stats_controller.py, and stats.js. The page includes a table of species sighting, an interactable map sighting, and a graph of user activity over time. The entry on the table can be expanded to view the map. 
+
 ## Developing your app
 
 ### Development advice 
