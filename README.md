@@ -17,54 +17,8 @@ This is the page users see when they log in. They should see a map, centered on 
 On the map, users should be able to draw a rectangle, and click on a button that says “statistics on region”.  This leads them to the statistics page for the selected region. 
 The map is also governed by a species selection box.  Users can select a species, and the map will show the density of that species. 
 
-### Map Implementation 
-
-Maps can be implemented in two ways: via Google Maps, or Leaflet.
-[This example]
-
-#### Google Maps  
-
-You can find the [Google Maps API documentation here](https://developers.google.com/maps/documentation/javascript/overview).  You will need to get an API key from Google.
-
-You can look at [this example](https://github.com/learn-py4web/vote-map/blob/master/static/js/edit.js) for how to integrate a Google Map in your app with vue.js; the example is for Vue2 but the difference with Vue3 is small. 
-
-You can use a [Heatmap Layer](https://developers.google.com/maps/documentation/javascript/heatmaplayer) to display bird density.  You can then use the drawing library to let users draw rectangles; see the documentation [here](https://developers.google.com/maps/documentation/javascript/examples/drawing-tools) and [here](https://developers.google.com/maps/documentation/javascript/drawinglayer#overview).
-
-#### Leaflet
-
-Another very nice library is [Leaflet](https://leafletjs.com/)  .  You can use it with OpenStreetMap tiles for this type of applications. In an app I wrote some time ago, I created a Leaflet map and added listeners like this: 
-
-```
-    app.init = () => {
-        app.map = L.map('map').setView([51.505, -0.09], 13);
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(app.map);
-        // Adds listener.
-        app.map.on('click', app.click_listener);
-        app.map.on('dbclick', app.dbclick_listener);
-    };
-```
-
-To draw polygons, you create a polygon: 
-
-```
-    app.drawing_polygon = L.polygon([], {color: 'red'}).addTo(app.map);
-```
-
-and when people click, you add the coordinates to the polygon: 
-
-```
-    app.click_listener = function (e) {
-        // If we are drawing, it's one more point for our polygon.
-        app.drawing_coords.push(e.latlng);
-        app.drawing_polygon.setLatLngs(app.drawing_coords);
-    };
-```
-
-In the project, you need to draw rectangles, and you can look at the [documentation](https://leafletjs.com/reference.html#rectangle) and invent some similar code. 
-For the heatmap, you may be able to use [this plugin](https://github.com/Leaflet/Leaflet.heat). 
+Emma Gius created everything on the Index page, including the interactive map, and worked on the index.html, index.js, and 
+index_controller.py files. ALso, near the beginning of the project, there is a Git commit thatis from "Ubuntu" which was just Emma pushing changes from my virtual machine, before Emma established what user name Emma's machine should push from. 
 
 ### Species selection
 
