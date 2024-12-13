@@ -46,6 +46,13 @@ When users select a region on the map page and click on "region information" (or
 
 You can use the [D3.js](https://d3js.org/) library to create visualizations, or the [Chart.js](https://www.chartjs.org/) library.  Other libraries are also possible.
 
+Donovan deVise seamlessly integrated the location page
+with the index page to showcase all bird species spotted in 
+the selected region. He created a chart alongside a list of
+all species which could be selected to view sightings over time
+for a given species. He also designed the page to show total 
+sightings as well as which observation sessions resulted in the
+most sightings.
 ## User statistics
 
 Users should be able to see their own statistics.  This page should show things like: 
