@@ -34,7 +34,7 @@ When the user is done, they can click on a "submit" button, and the checklist is
 
 There should be some additional page where users see the list of checklists they have submitted, and where they can delete them, or go edit them (via the checklist page).  This "My Checklists" page 
 
-Selam worked on Checklist and My Checklist pages, including checklist.html, checklist_controller.py, checklist.js, my_checklist.js and my_checklists.html. The Checklist page allows users to add species sightings with counts and submit them, while the My Checklist page displays submitted checklists in a table with editable counts, deletion options, and proper grouping by date.
+Selam worked on Checklist and My Checklist pages, that involve checklist.html, checklist_controller.py, checklist.js, my_checklist.js and my_checklists.html. The Checklist page allows users to add species sightings with counts and submit them, while the My Checklist page displays submitted checklists in a table with editable counts, deletion options, and proper grouping by date.
 
 ## Location page
 
