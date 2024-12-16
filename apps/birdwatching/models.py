@@ -80,4 +80,62 @@ db.define_table('checklists',
     Field('observer_id', 'string')
 )
 
+if db(db.species).isempty():
+    with open(os.path.join(current_dir, "samples", "species.csv"), 'r') as f:
+        reader = csv.reader(f)
+        next(reader) # skip header
+        for row in reader:
+            db.species.insert(name=row[0])
+            
+            
+if db(db.checklists).isempty():
+    with open(os.path.join(current_dir, "samples", "checklists.csv"), 'r') as f:
+        reader = csv.reader(f)
+        next(reader) # skip header
+        for row in reader:
+            try:
+                observation_date = handle_partial_date(row[3])
+                observation_duration = int(float(row[6])) if row[6] else 0
+                if observation_date is None:
+                    print(f"Skipping row due to invalid date: {row}")
+                    continue  # Skip rows with invalid dates
+
+                db.checklists.insert(
+                sample_event_identifier=row[0],
+                latitude=row[1],
+                longitude=row[2],
+                observation_date=observation_date,
+                # observation_date=row[3],
+                observation_time=row[4],
+                # observation_duration=row[6],
+                observation_duration=observation_duration,
+                observer_id=row[5],
+            )
+            except ValueError as e:
+                print(f"Date parsing error: {e} in row {row}")
+                continue  # Skip invalid rows
+            if row[6]:
+                observation_duration = int(float(row[6]))
+            else:
+                observation_duration = 0
+            # try:
+            #     observation_date = handle_partial_date(row[3])  # Validate and correct the date
+            # except ValueError:
+            #     observation_date = None 
+
+if db(db.sightings).isempty():
+    with open(os.path.join(current_dir, "samples", "sightings.csv"), 'r') as f:
+        reader = csv.reader(f)
+        next(reader) # skip header
+        for row in reader:
+            if row[2] and row[2] != "X":
+                observation_count = int(float(row[2]))
+            else:
+                observation_count = 0
+            db.sightings.insert(
+                sample_event_identifier=row[0],
+                specie_name=row[1],
+                observation_count=observation_count,
+            )
+
 db.commit()
